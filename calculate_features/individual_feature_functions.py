@@ -78,8 +78,3 @@ def get_SA(site_type,site_start,gene,species):
         #         sa_score = np.log10(float(line.split('\t')[14]))
         #         break
 
-# TODO #
-def get_PCT():
-    return
-
-

@@ -20,37 +20,64 @@ T0 = time.time()
 pd.options.mode.chained_assignment = None
 
 assert len(sys.argv) == 5, "See README for usage"
-ORF_file, TARGET_file, BIN_FILE, OUT_file = sys.argv[1:]
+MIRNA_file, TARGET_file, ORF_file, OUT_file = sys.argv[1:]
 
-## IMPORT ALL FILES AND SAVE TO DATAFRAMES ##
+
+## Import target and mirna data ##
 t0 = time.time()
-print "Importing files..."
+print "Adding target and miRNA data..."
 
-ORFS = pd.read_csv(ORF_file,sep='\t',header=None).astype(str)
-ORFS.columns = ['Gene ID','Species ID','ORF sequence']
-ORFS = ORFS[ORFS['Species ID'] == config.REF_SPECIES]
-ORFS['ORF sequence'] = [x.replace('-','').upper().replace('T','U') for x in ORFS['ORF sequence']]
-ORFS = ORFS.set_index('Gene ID')
+MIRNAS = pd.read_csv(MIRNA_file,sep='\t',header=None).astype(str)
+MIRNAS.columns = ['miRNA family','Species ID','Mirbase ID','miRNA sequence']
+MIRNAS = MIRNAS[MIRNAS['Species ID'] == config.REF_SPECIES]
+MIRNAS = MIRNAS.set_index('miRNA family')
 
-print '{} seconds'.format(time.time()-t0)
-
-# # BINS = pd.read_csv(BIN_FILE,sep='\t')
 
 TARGETS = pd.read_csv(TARGET_file,sep='\t').astype(str)
-TARGETS = TARGETS[TARGETS['Species ID'] == config.REF_SPECIES].drop('Species ID',1)
 TARGETS[['Site start','Site end']] = TARGETS[['Site start','Site end']].astype(int)
-
-## Add ORF data ##
-t0 = time.time()
-print "Adding ORF data..."
-
-TARGETS.loc[:,'ORF sequence'] = list(ORFS.loc[TARGETS['Gene ID']]['ORF sequence'])
-TARGETS.loc[:,'ORF length'] = [np.log10(len(orf)) for orf in TARGETS['ORF sequence']]
-zipped = zip(list(TARGETS['ORF sequence']),list(TARGETS['Seed']))
-TARGETS.loc[:,'ORF 8mers'] = [orf.count(utils.reverse_complement(seed) + 'A') for (orf,seed) in zipped]
-TARGETS = TARGETS.drop('ORF sequence',1)
+TARGETS[['UTR BLS','Branch length score']] = TARGETS[['UTR BLS','Branch length score']].astype(float)
 
 print '{} seconds'.format(time.time()-t0)
+
+
+## Calculate features ##
+t0 = time.time()
+print "Calculating features..."
+
+groups = TARGETS.groupby('Gene ID')
+num_genes = len(groups)
+
+data = []
+
+# run calculations in parallel if indicated
+if config.FUTURES:
+    executor = concurrent.futures.ProcessPoolExecutor()
+    futures = []
+    for i, (gene, group) in enumerate(groups):
+        futures.append(executor.submit(calculate_all_features, gene, group, MIRNAS))
+        if (i%1000) == 0:
+            print '{}/{}'.format(i,num_genes)
+
+    print time.time()-T0
+
+    for future in concurrent.futures.as_completed(futures):
+        data += future.result()
+
+    executor.shutdown()
+
+# otherwise, run non-parallel version
+else:
+    for i, (gene, group) in enumerate(groups):
+        data += calculate_all_features(gene, group, MIRNAS)
+        if (i%1000) == 0:
+            print '{}/{}'.format(i,num_genes)
+
+TARGETS = pd.DataFrame(data)
+TARGETS.columns = ['Gene ID','miRNA family','Mirbase ID','miRNA sequence','Seed',
+'Site type','Site start','Site end','Threep score','Local AU score','Min dist score','UTR length score','Off6m score', 'Branch length score', 'UTR BLS']
+
+print '{} seconds'.format(time.time()-t0)
+
 
 ## Add TA and SPS data ##
 t0 = time.time()
@@ -66,49 +93,27 @@ TA_SPS.loc[:,'SPS'] = [a if stype in ['8mer-1a','7mer-m8'] else b for (a,b,stype
 TARGETS.loc[:,'TA'] = list(TA_SPS['TA'])
 TARGETS.loc[:,'SPS'] = list(TA_SPS['SPS'])
 
-TARGETS['index'] = range(len(TARGETS))
-TARGETS = TARGETS.set_index('index')
-
 print '{} seconds'.format(time.time()-t0)
 
-## Calculate other features ##
+
+## Add ORF length and ORF 8mer count ##
 t0 = time.time()
-print "Calculating features..."
+print "Adding ORF data..."
 
-zipped = zip(list(TARGETS['Gene ID']),list(TARGETS['miRNA sequence']),list(TARGETS['UTR sequence']),
-    list(TARGETS['Seed']),list(TARGETS['Site type']),list(TARGETS['Site start']),list(TARGETS['Site end']))
-TARGETS = TARGETS.drop(['UTR sequence'],1)
+ORFS = pd.read_csv(ORF_file,sep='\t',header=None).astype(str)
+ORFS.columns = ['Gene ID','Species ID','ORF sequence']
+ORFS = ORFS[ORFS['Species ID'] == config.REF_SPECIES]
+ORFS['ORF sequence'] = [x.replace('-','').upper().replace('T','U') for x in ORFS['ORF sequence']]
+ORFS = ORFS.set_index('Gene ID')
 
-data = np.zeros((len(TARGETS),6))
+orf_list = list(ORFS.loc[TARGETS['Gene ID']].fillna('')['ORF sequence'])
+TARGETS.loc[:,'ORF length'] = [np.log10(len(orf)) for orf in orf_list]
+zipped = zip(orf_list,list(TARGETS['Seed']))
+TARGETS.loc[:,'ORF 8mers'] = [orf.count(utils.reverse_complement(seed) + 'A') for (orf,seed) in zipped]
 
-# run parallel version
-if config.FUTURES:
-    executor = concurrent.futures.ProcessPoolExecutor()
-    futures = []
-    for i,inputs in enumerate(zipped):
-    	futures.append(executor.submit(calculate_all_features, i, inputs))
-    	time.sleep(0.00001)
-
-    print time.time()-T0
-
-    i = 0
-    for future in concurrent.futures.as_completed(futures):
-    	data[i,:] = future.result()
-    	i += 1
-
-    executor.shutdown()
-
-# otherwise, run non-parallel version
-else:
-    for i,inputs in enumerate(zipped):
-    	data[i,:] = calculate_all_features(i, inputs)
-
-merge_df = pd.DataFrame(data)
-merge_df.columns = ['index', 'Threep score', 'Local AU score', 'Min dist', 'UTR length score', 'Off6m score']
-merge_df = merge_df.set_index('index')
-TARGETS = pd.concat([TARGETS, merge_df], axis=1, join='inner')
 
 print '{} seconds'.format(time.time()-t0)
+
 
 ## Write to file ##
 t0 = time.time()
