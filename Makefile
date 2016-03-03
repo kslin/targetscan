@@ -14,5 +14,5 @@ sites:
 
 features:
 	# cd calculate_features/ && python calculate_features.py  ../../infiles/miR_for_context_scores.sample.txt ../../outfiles/sites_tiny_outfile.txt ../../infiles/ORF_Sequences_sample.txt ../../outfiles/tiny_output.txt
-	cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_small_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/small_output.txt
-	# cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/big_output.txt
+	# cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_small_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/small_output.txt
+	cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/big_output.txt
