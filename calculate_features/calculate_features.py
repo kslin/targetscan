@@ -1,7 +1,8 @@
 import ast
+import os
 import re
 from string import maketrans
-# from subprocess import call
+import subprocess
 import sys
 import time
 
@@ -16,24 +17,26 @@ import utils
 
 T0 = time.time()
 
+if len(sys.argv) != 5:
+    print 'See README for usage'
+    sys.exit()
+MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE = sys.argv[1:]
+
 # disable chained assignment warning
 pd.options.mode.chained_assignment = None
-
-assert len(sys.argv) == 5, "See README for usage"
-MIRNA_file, TARGET_file, ORF_file, OUT_file = sys.argv[1:]
 
 
 ## Import target and mirna data ##
 t0 = time.time()
 print "Adding target and miRNA data..."
 
-MIRNAS = pd.read_csv(MIRNA_file,sep='\t',header=None).astype(str)
+MIRNAS = pd.read_csv(MIRNA_FILE,sep='\t',header=None).astype(str)
 MIRNAS.columns = ['miRNA family','Species ID','Mirbase ID','miRNA sequence']
 MIRNAS = MIRNAS[MIRNAS['Species ID'] == config.REF_SPECIES]
 MIRNAS = MIRNAS.set_index('miRNA family')
 
 
-TARGETS = pd.read_csv(TARGET_file,sep='\t').astype(str)
+TARGETS = pd.read_csv(TARGET_FILE,sep='\t').astype(str)
 TARGETS[['Site start','Site end']] = TARGETS[['Site start','Site end']].astype(int)
 TARGETS[['UTR BLS','Branch length score']] = TARGETS[['UTR BLS','Branch length score']].astype(float)
 
@@ -47,6 +50,9 @@ print "Calculating features..."
 groups = TARGETS.groupby('Gene ID')
 num_genes = len(groups)
 
+if os.path.isdir(config.RNAPLFOLD_FOLDER) == False:
+    os.mkdir(config.RNAPLFOLD_FOLDER)
+
 data = []
 
 # run calculations in parallel if indicated
@@ -54,7 +60,10 @@ if config.FUTURES:
     executor = concurrent.futures.ProcessPoolExecutor()
     futures = []
     for i, (gene, group) in enumerate(groups):
+        # utr = group.iloc[0]['UTR sequence']
+        # rnaplfold_data = individual_feature_functions.get_rnaplfold_data(gene,utr)
         futures.append(executor.submit(calculate_all_features, gene, group, MIRNAS))
+        time.sleep(0.0001)
         if (i%1000) == 0:
             print '{}/{}'.format(i,num_genes)
 
@@ -68,14 +77,19 @@ if config.FUTURES:
 # otherwise, run non-parallel version
 else:
     for i, (gene, group) in enumerate(groups):
+        # utr = group.iloc[0]['UTR sequence']
+        # rnaplfold_data = individual_feature_functions.get_rnaplfold_data(gene,utr)
         data += calculate_all_features(gene, group, MIRNAS)
         if (i%1000) == 0:
             print '{}/{}'.format(i,num_genes)
 
 TARGETS = pd.DataFrame(data)
-TARGETS.columns = ['Gene ID','miRNA family','Mirbase ID','miRNA sequence','Seed',
-'Site type','Site start','Site end','Threep score','Local AU score','Min dist score','UTR length score','Off6m score', 'Branch length score', 'UTR BLS']
+TARGETS.columns = ['Gene ID', 'miRNA family', 'Mirbase ID', 'miRNA sequence', 'Seed',
+'Site type', 'Site start', 'Site end', 'Threep score', 'Local AU score', 'Min dist score',
+'UTR length score', 'Off6m score', 'SA', 'siRNA 1A', 'siRNA 1C', 'siRNA 1G', 'siRNA 8A',
+'siRNA 8C', 'siRNA 8G', 'site 8A', 'site 8C', 'site 8G', 'PCT', 'Conserved', 'Branch length score', 'UTR BLS']
 
+os.rmdir(config.RNAPLFOLD_FOLDER)
 print '{} seconds'.format(time.time()-t0)
 
 
@@ -100,7 +114,7 @@ print '{} seconds'.format(time.time()-t0)
 t0 = time.time()
 print "Adding ORF data..."
 
-ORFS = pd.read_csv(ORF_file,sep='\t',header=None).astype(str)
+ORFS = pd.read_csv(ORF_FILE,sep='\t',header=None).astype(str)
 ORFS.columns = ['Gene ID','Species ID','ORF sequence']
 ORFS = ORFS[ORFS['Species ID'] == config.REF_SPECIES]
 ORFS['ORF sequence'] = [x.replace('-','').upper().replace('T','U') for x in ORFS['ORF sequence']]
@@ -119,7 +133,7 @@ print '{} seconds'.format(time.time()-t0)
 t0 = time.time()
 print "Writing to file..."
 
-TARGETS.to_csv(OUT_file,sep='\t',index=False)
+TARGETS.to_csv(OUT_FILE,sep='\t',index=False)
 
 print '{} seconds'.format(time.time()-t0)
 

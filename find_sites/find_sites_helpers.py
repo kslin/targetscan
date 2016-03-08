@@ -1,8 +1,8 @@
-import math
 import re
 import time
 
 from Bio import Phylo
+import numpy as np
 import pandas as pd
 
 import config
@@ -123,7 +123,7 @@ def get_site_info(utr_no_gaps,seed,window_dict):
     return tuple(site_starts),tuple(site_ends),tuple(site_types)
 
 
-def get_branch_length_score(species_list):
+def get_branch_length_score_generic(species_list):
     species_list = [x for x in species_list if x != -1]
     if len(species_list) == 0:
         return 0
@@ -134,29 +134,32 @@ def get_branch_length_score(species_list):
     bls = sum([x[1] for x in all_paths])
     return bls
 
-# def get_branch_length_score(species_list,bin):
-#     species_list = [x for x in species_list if x != -1]
-#     if len(species_list) == 0:
-#         return 0
-#     all_paths = []
-#     for sp in species_list:
-#         all_paths += config.TREES[bin][sp]
-#     all_paths = list(set(list(all_paths)))
-#     bls = sum([x[1] for x in all_paths])
-#     return bls
+def get_branch_length_score_specific(species_list,bin):
+    species_list = [x for x in species_list if x != -1]
+    if len(species_list) == 0:
+        return 0
+    all_paths = []
+    for sp in species_list:
+        all_paths += config.TREES[bin][sp]
+    all_paths = list(set(list(all_paths)))
+    bls = sum([x[1] for x in all_paths])
+    return bls
 
-# def calculate_pct(aligning_species,bin,site_type,seed):
-#     if site_type == '6mer':
-#         return 0.0,0
+def calculate_pct(aligning_species,bin,site_type,seed):
+    if site_type == '6mer':
+        return 0.0,0
 
-#     bls = get_branch_length_score(aligning_species,bin)
-#     b0,b1,b2,b3 = config.PARAMS[site_type][seed]
+    if seed not in config.PARAMS[site_type]:
+        return 0.0,0
 
-#     score = max(0.0, b0 + b1/(1.0 + (math.e*(0.0-b2)*bls) + b3))
+    bls = get_branch_length_score_specific(aligning_species,bin)
+    b0,b1,b2,b3 = config.PARAMS[site_type][seed]
 
-#     conserved = int(score >= config.CONSERVATION_CUTOFFS[site_type])
+    score = max(0.0, b0 + (b1/(1.0 + (np.exp(((0.0-b2)*bls) + b3)))))
 
-#     return [score, conserved]
+    conserved = int(score >= config.CONSERVATION_CUTOFFS[site_type])
+
+    return [score, conserved]
 
 
 
