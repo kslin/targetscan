@@ -9,6 +9,63 @@ import config
 import utils
 
 
+def get_seed_window_dict(seeds):
+    seed_window_dict = {}
+    for seed in seeds:
+        site = utils.reverse_complement(seed)
+        window_dict = {}
+        window_dict[site+'A'] = '8mer-1a'
+        for nt in ['C','U','G','X']:
+            window_dict[site+nt] = '7mer-m8'
+        other_nts = ['A','U','C','G','X']
+        other_nts.remove(site[0])
+        for nt1 in other_nts:
+            window_dict[nt1+site[1:]+'A'] = '7mer-1a'
+            for nt8 in ['C','U','G','X']:
+                window_dict[nt1+site[1:]+nt8] = '6mer'
+        seed_window_dict[seed] = window_dict
+    return seed_window_dict
+
+
+def import_seeds(seed_file):
+    """Import and organize seed information"""
+
+    # read in seed file and organize seed information
+    seeds = pd.read_csv(seed_file, sep='\t', header=None).fillna('')
+    seeds.columns = ['miRNA family', 'Seed', 'Species with miRNA']
+    seeds = seeds.set_index('Seed')
+    seed_window_dict = get_seed_window_dict(list(seeds.index))
+
+    # make a dictionary listing all the species that have a particular microRNA
+    seed_to_species = {}
+    for row in seeds.iterrows():
+        if row[0] not in seed_to_species.keys():
+            if row[1]['Species with miRNA'] != '':
+                seed_to_species[row[0]] = row[1]['Species with miRNA'].split(';')
+            else:
+                seed_to_species[row[0]] = []
+
+    return seed_window_dict, seed_to_species, seeds
+
+def import_utrs(utr_file):
+    """Import and organize utr information"""
+
+    # read in utr file
+    UTRS = pd.read_csv(utr_file, sep='\t', header=None).astype(str)
+    UTRS.columns = ['Gene', 'Species', 'UTR sequence']
+
+    # sanitize utr sequences
+    UTRS['UTR sequence'] = ['X' + x.upper().replace('T', 'U').replace('\n', '') + 'X'
+                            for x in UTRS['UTR sequence']]
+    UTRS = UTRS.set_index('Gene')
+
+    # make a separate dataframe for the utr sequences of the reference species
+    UTRS_REF = UTRS[UTRS['Species'] == config.REF_SPECIES]
+    UTRS_REF['UTR sequence'] = [x.replace('-', '')
+                                for x in UTRS_REF['UTR sequence']]
+
+    return UTRS, UTRS_REF
+
 def parse_tree(tree_file,ref_species):
     tree = Phylo.read(tree_file,'newick')
 
@@ -32,22 +89,6 @@ def parse_tree(tree_file,ref_species):
         species_to_path[leaf.name] = path_lengths
     return species_to_path
 
-def get_seed_window_dict(seeds):
-    seed_window_dict = {}
-    for seed in seeds:
-        site = utils.reverse_complement(seed)
-        window_dict = {}
-        window_dict[site+'A'] = '8mer-1a'
-        for nt in ['C','U','G','X']:
-            window_dict[site+nt] = '7mer-m8'
-        other_nts = ['A','U','C','G','X']
-        other_nts.remove(site[0])
-        for nt1 in other_nts:
-            window_dict[nt1+site[1:]+'A'] = '7mer-1a'
-            for nt8 in ['C','U','G','X']:
-                window_dict[nt1+site[1:]+nt8] = '6mer'
-        seed_window_dict[seed] = window_dict
-    return seed_window_dict
 
 def get_matches(locs1,locs2,sp):
     l1,l2 = 0,0
@@ -110,7 +151,6 @@ def find_aligning_species(utr_df,seedm8,species,num_sites):
 
 def get_site_info(utr_no_gaps,seed,window_dict):
     # print utr_no_gaps
-    # utr_no_gaps = 'X'+utr_no_gaps.replace('\n','')+'X'
     rc_seed = utils.reverse_complement(seed)
     locs = [m.start() for m in re.finditer('(?={})'.format(rc_seed[1:]),utr_no_gaps)]
 
@@ -118,7 +158,7 @@ def get_site_info(utr_no_gaps,seed,window_dict):
     site_types = [window_dict[x] for x in windows]
 
     site_starts = [x - 1 - int(y in ['8mer-1a','7mer-m8']) for (x,y) in zip(locs,site_types)]
-    site_ends = [x +5+ int(y in ['8mer-1a','7mer-1a']) for (x,y) in zip(locs,site_types)]
+    site_ends = [x + 5 + int(y in ['8mer-1a','7mer-1a']) for (x,y) in zip(locs,site_types)]
     
     return tuple(site_starts),tuple(site_ends),tuple(site_types)
 

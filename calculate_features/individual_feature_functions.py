@@ -76,14 +76,14 @@ def calculate_min_dist(site_start,site_end,airs_subdf):
     airs_subdf = airs_subdf[airs_subdf['AIR end'] >= site_end]
     min_dists = [min(site_start,x-site_end) for x in airs_subdf['AIR end'].values]
     weighted = np.dot(min_dists,airs_subdf['AIR ratio'].values)/float(np.sum(airs_subdf['AIR ratio'].values))
-    if weighted <= 0:
+    if weighted <= 1:
             return 0
     return np.log10(weighted)
 
 def calculate_weighted_utr_length(site_end,airs_subdf):
     airs_subdf = airs_subdf[airs_subdf['AIR end'] >= site_end]
     weighted = np.dot(airs_subdf['AIR end'],airs_subdf['AIR ratio'])/float(np.sum(airs_subdf['AIR ratio']))
-    if weighted <= 0:
+    if weighted <= 1:
             return 0
     return np.log10(weighted)
 
@@ -95,9 +95,17 @@ def calculate_weighted_num_off6mers(off6m_locs,site_end,airs_subdf):
         airs_subdf = airs_subdf[airs_subdf['AIR end'] >= site_end]
         airs_subdf.loc[:,'counts'] = [len([loc for loc in off6m_locs if loc < end]) for end in airs_subdf['AIR end']]
         weighted = np.dot(airs_subdf['counts'],airs_subdf['AIR ratio'])/float(np.sum(airs_subdf['AIR ratio']))
-        if weighted <= 0:
+        if weighted <= 1:
             return 0
         return np.log10(weighted)
+
+# utr = 'AUUGCACUUUAUAUGUCCAGCCUCUUCCUCAGUCCCCCAAACCAAAGCUACACAGCCAGAUUUCUCAAGCAGUCUCAACUCCAGUCCCUCAUCUCACCCUUACUAUUGCUCUUGCUUUCCAGUUUGCUUUUGAUUUGCAUCUUCUCACUAGUAAAACUGCCUUCCCUUUGUUCCUUAUUUUCUGUUUUUUCUCUAGAGAGGUACAGUUGUAAGUCAGAGUUAAUAUAAUAGGGCCUGUGAAAACAGAGGCUUUUGCAUUGUCUCUUGACAUCAGAAGUUACAAUAGGCAUAUGGGCAAAAUGGUGUAGCAGGCUCACUGGCCGUUUGUUUUUUAAACACAUUUUCACAAGUUUUUGAGACACUGGAUUUCUUUAAUUAAAAAAAAAAUGCCAAGAAACAUUAUUUAUACAGGGUUGAUUGCUUUCAUGUUGUUAUUCUGUACCCUAUAGUAGCCUCCAUGAGAAUCUGGUAUUUCUUGCUGCUUGGAACUACUUUGCAGUGAUUACUUGGUUGCAGUCCAAGUACUCUCGUUUAGUCUGAGCCUGGAGAUGUUCUAGACUUGCUUCUCCCACCUCUGAGAUUAGGACAGGAAAAAUGUGAAAUUUCCCAAUUACAGGAUUAUACGGUACCAUCACAUCAUUUGUGGAAAUUGGGGUGACUGUAUAGCUGGGAUUGGGCUAAGGACUGUGGUCUUAUCUGUCCACAUACAGCCAAAAUGCCUAUCCAGAAAUCCAGUUCGUUGGAAAGGAAAAUUGGUACUCCUGUGCCACAGGGGUUCCAGAAAAGGGAAGUCACUUUACCUUGCGGUGGUGGGAUCCUGAUGUCUUUCAUCCAUUUGUAGUAAAAGCUGGUAAAGCUUUUCUUACUCCUGGUUCCCUACCAGUAUUUCUAAACAUGUCGCACUUUCUCCACAGgcaugugguuuugaccuuuuuuucaaucuucuagaaagggaacggaagcagaagugggacaucgagggcucugcuguccucugcgcuggguguggaaugcugcugcaccugucccuucugcuggcucagggaagugucuucuugcccacauuucuguggggaaagguuuuuaauccucUGAUGCUUCCAUCUUCCUGUUUAGGCCAUGUGCCCAGAAACCUGGACUGAUCUUUCUUUAAUAGUGAACCCCUGGGCCACUGAAGAGUAACAUGGCUCCACUGGACACAAAAGAGGGAUGGAAUCAACAGGCAGGGGGCCUUUUAUAAGCCUUAGGAAAAGAAAAUGAAACUAUUUCAUCUUUGGACUUUUCAAUACUAUUGGAGUGAUUUUUUUCUUUCUAAACAGGGAAAAUAAUGUUACAAAAGCAUCUUUUUUGUUAUUUGUUUGCAUCCCUCCCCCACACCCUGGUGUUUUAAAAUGAAGAAAAAAAACCAUCACCUUUUGUACAAAAACUCUUAAUGAUUAAAAAACAAACAAAACAUA'
+# print len(utr)
+# utr = utr.upper()
+# # seed = 'AAAGUGC'
+# mirna = 'UAAAGUGCUGACAGUGCAGAU'
+
+# print calculate_threep_score(mirna, utr,'7mer-1a',792)
 
 
 # def calculate_SA(site_type,site_start,lunp_file):

@@ -6,7 +6,7 @@ import find_sites_helpers
 
 FUTURES = os.environ.get('FUTURES', False)
 REF_SPECIES = '9606'
-TOO_CLOSE = 15
+TOO_CLOSE = 14
 
 TREE_FILE_GENERIC = '../PCT_parameters/Tree.generic.txt'
 SPECIES_TO_PATH = find_sites_helpers.parse_tree(TREE_FILE_GENERIC, REF_SPECIES)

@@ -121,7 +121,7 @@ ORFS['ORF sequence'] = [x.replace('-','').upper().replace('T','U') for x in ORFS
 ORFS = ORFS.set_index('Gene ID')
 
 orf_list = list(ORFS.loc[TARGETS['Gene ID']].fillna('')['ORF sequence'])
-TARGETS.loc[:,'ORF length'] = [np.log10(len(orf)) for orf in orf_list]
+TARGETS.loc[:,'ORF length'] = [np.log10(len(orf)) if len(orf) > 0 else 0 for orf in orf_list]
 zipped = zip(orf_list,list(TARGETS['Seed']))
 TARGETS.loc[:,'ORF 8mers'] = [orf.count(utils.reverse_complement(seed) + 'A') for (orf,seed) in zipped]
 

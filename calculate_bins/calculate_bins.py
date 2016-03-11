@@ -5,7 +5,6 @@ import time
 from Bio import Phylo
 import concurrent.futures
 import pandas as pd
-# from tqdm import tqdm
 
 import config
 from tasks import get_median_bls
@@ -13,51 +12,62 @@ from tasks import get_median_bls
 
 T0 = time.time()
 
+# Get file of aligned UTRS and the file for writing output
 UTR_FILE = sys.argv[1]
 OUT_FILE = sys.argv[2]
 
-sys.stdout.write('Processing UTRS... ')
+# PROCESS UTR FILE
+print 'Processing UTRS... '
+t0 = time.time()
 
-UTRS = pd.read_csv(UTR_FILE,sep='\t',header=None)
-UTRS.columns = ['Gene ID','Species ID','UTR sequence']
-UTRS[['Gene ID','Species ID','UTR sequence']] = UTRS[['Gene ID','Species ID','UTR sequence']].astype(str)
+# Read UTR file into a pandas dataframe and group UTRs by gene
+UTRS = pd.read_csv(UTR_FILE, sep='\t', header=None)
+UTRS.columns = ['Gene ID', 'Species ID', 'UTR sequence']
+UTRS[['Gene ID', 'Species ID', 'UTR sequence']] \
+    = UTRS[['Gene ID', 'Species ID', 'UTR sequence']].astype(str)
 UTRS = UTRS.groupby('Gene ID')
 
-sys.stdout.write('{} seconds\n'.format(time.time()-T0))
-T0 = time.time()
-sys.stdout.write('Assigning bins... ')
+print '{} seconds\n'.format(time.time()-t0)
+
+# ASSIGN UTRS TO BINS
+print 'Assigning bins... '
+t0 = time.time()
 bins = []
 num_utrs = len(UTRS)
+
+# Use the parallel version of the code if indicated by the user
 if config.FUTURES:
     executor = concurrent.futures.ProcessPoolExecutor()
-    # futures = [executor.submit(get_median_bls, i, gene, utr_group) for i,(gene, utr_group) in enumerate(UTRS)]
     futures = []
-    for i,(gene,utr_group) in enumerate(UTRS):
-        futures.append(executor.submit(get_median_bls, i, gene, utr_group))
-        if (i % 1000) == 0:
-            print '{}/{}'.format(i,num_utrs)
 
-    # for future in tqdm(concurrent.futures.as_completed(futures), total=len(UTRS), unit='UTR', leave=True):
+    # Spin off jobs to be done in parallel
+    for i, (gene, utr_group) in enumerate(UTRS):
+        futures.append(executor.submit(get_median_bls, gene, utr_group))
+
+        # Add sleep to prevent the executor from being overwhelmed with jobs
+        time.sleep(0.0001)
+
+    # Collect job results as they come in
+    # since we do not care about the order in which jobs finish
     for future in concurrent.futures.as_completed(futures):
         bins.append(future.result())
 
     executor.shutdown()
+
+# Otherwise, use the non-parallel version
 else:
-    # for gene, utr_group in tqdm(UTRS, unit='UTR', leave=True):
-    for i,(gene, utr_group) in enumerate(UTRS):
-        bins.append(get_median_bls(i, gene, utr_group))
+    for i, (gene, utr_group) in enumerate(UTRS):
+        bins.append(get_median_bls(gene, utr_group))
 
-# sys.stdout.write(bins
-sys.stdout.write('{} seconds\n'.format(time.time()-T0))
-# mydf = pd.DataFrame(bins)
+print '{} seconds\n'.format(time.time()-t0)
 
-sys.stdout.write('Writing to file... ')
-T0 = time.time()
-# sys.stdout.write(bins
-# mydf.to_csv(OUT_FILE,sep='\t',index=False,header=None)
-with open(OUT_FILE,'wb') as f:
-    writer = csv.writer(f,delimiter='\t')
+# WRITE RESULTS TO A FILE
+print 'Writing to file... '
+t0 = time.time()
+
+with open(OUT_FILE, 'wb') as f:
+    writer = csv.writer(f, delimiter='\t')
     writer.writerows(bins)
-sys.stdout.write('{} seconds\n'.format(time.time()-T0))
+print '{} seconds\n'.format(time.time()-t0)
 
-
+print 'Total time elapsed: {}'.format(time.time()-T0)
