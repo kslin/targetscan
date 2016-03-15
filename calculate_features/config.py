@@ -31,3 +31,8 @@ AIRS_FILE = '../../infiles/All_cell_lines.AIRs.txt'
 # TARGET_FILE = '../../outfiles/sites_big_outfile.txt' 
 # ORF_FILE = '../../infiles/ORF_Sequences_human.txt'
 # OUT_FILE = '../../outfiles/big_output.txt'
+
+# read in AIRS file
+AIRS = pd.read_csv(AIRS_FILE,sep='\t',header=None)
+AIRS.columns = ['Gene ID','AIR start','AIR end','AIR ratio']
+AIRS = AIRS.set_index('Gene ID')

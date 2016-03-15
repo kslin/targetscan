@@ -10,20 +10,36 @@ import utils
 
 
 def get_seed_window_dict(seeds):
+    """
+    Given a list of seeds, find all the possible site types
+
+    Parameters:
+    ----------
+    seeds: list of strings
+
+    Output:
+    ------
+    dictionary of dictionaries
+    """
     seed_window_dict = {}
+
+    # for each seed, construct a dictionary of {sequence: site type}
     for seed in seeds:
-        site = utils.reverse_complement(seed)
+        site = utils.rev_comp(seed)
         window_dict = {}
-        window_dict[site+'A'] = '8mer-1a'
-        for nt in ['C','U','G','X']:
-            window_dict[site+nt] = '7mer-m8'
-        other_nts = ['A','U','C','G','X']
+        window_dict[site + 'A'] = '8mer-1a'
+        for nt in ['C', 'U', 'G', 'X']:
+            window_dict[site + nt] = '7mer-m8'
+        other_nts = ['A', 'U', 'C', 'G', 'X']
         other_nts.remove(site[0])
         for nt1 in other_nts:
-            window_dict[nt1+site[1:]+'A'] = '7mer-1a'
-            for nt8 in ['C','U','G','X']:
-                window_dict[nt1+site[1:]+nt8] = '6mer'
+            window_dict[nt1 + site[1:] + 'A'] = '7mer-1a'
+            for nt8 in ['C', 'U', 'G', 'X']:
+                window_dict[nt1 + site[1:] + nt8] = '6mer'
+
+        # link the seed-specific dictionary to the seed
         seed_window_dict[seed] = window_dict
+
     return seed_window_dict
 
 
@@ -41,11 +57,13 @@ def import_seeds(seed_file):
     for row in seeds.iterrows():
         if row[0] not in seed_to_species.keys():
             if row[1]['Species with miRNA'] != '':
-                seed_to_species[row[0]] = row[1]['Species with miRNA'].split(';')
+                seed_to_species[row[0]] = \
+                    row[1]['Species with miRNA'].split(';')
             else:
                 seed_to_species[row[0]] = []
 
     return seed_window_dict, seed_to_species, seeds
+
 
 def import_utrs(utr_file):
     """Import and organize utr information"""
@@ -55,7 +73,8 @@ def import_utrs(utr_file):
     UTRS.columns = ['Gene', 'Species', 'UTR sequence']
 
     # sanitize utr sequences
-    UTRS['UTR sequence'] = ['X' + x.upper().replace('T', 'U').replace('\n', '') + 'X'
+    UTRS['UTR sequence'] = ['X{}X'.format(x.upper().replace('T', 'U')
+                                          .replace('\n', ''))
                             for x in UTRS['UTR sequence']]
     UTRS = UTRS.set_index('Gene')
 
@@ -66,33 +85,73 @@ def import_utrs(utr_file):
 
     return UTRS, UTRS_REF
 
-def parse_tree(tree_file,ref_species):
-    tree = Phylo.read(tree_file,'newick')
 
+def parse_tree(tree_file, ref_species):
+    """
+    Parses a phylogenetic tree and find the edge path between the reference
+    species and all the other species in the tree
+
+    Parameters
+    ----------
+    tree_file: string, name of file that contains the phylogenetic tree
+        tree must be in newick format
+
+    ref_species: string, species id of the reference species
+        must be contained in the tree
+
+    Output
+    ------
+    dictionary: for every species, gives the edge path
+        to the reference species
+    """
+    # read in the phylogenetic tree using Phylo
+    tree = Phylo.read(tree_file, 'newick')
+
+    # gene all the leaves of the tree and check for the reference species
     leaves = tree.get_terminals()
-    for i,leaf in enumerate(leaves):
+    for i, leaf in enumerate(leaves):
         if leaf.name == ref_species:
             ref_leaf = leaves.pop(i)
-    assert ref_leaf.name == ref_species, "Error: reference species not in tree"
-    species_to_path = {ref_leaf.name:[(ref_leaf.name,0)]}
+    if ref_leaf.name != ref_species:
+        print 'Error: reference species not in tree'
+        sys.exit()
 
-    for i,node in enumerate(tree.get_nonterminals()):
+    # dictionary that stores the paths to the reference species
+    species_to_path = {ref_leaf.name: [(ref_leaf.name, 0)]}
+
+    # give each node a number so that we can uniquely identify edges
+    for i, node in enumerate(tree.get_nonterminals()):
         node.name = 'n{}'.format(i)
 
+    # for all the species, find the path to the reference species
     for leaf in leaves:
-        path = tree.trace(ref_leaf,leaf)
-        lca = tree.common_ancestor(ref_leaf,leaf).name
-        path_lengths = [(ref_leaf.name,float(ref_leaf.branch_length))]
+        path = tree.trace(ref_leaf, leaf)
+        lca = tree.common_ancestor(ref_leaf, leaf).name
+        path_lengths = [(ref_leaf.name, float(ref_leaf.branch_length))]
         for edge in path:
             if edge.name != lca:
-                path_lengths.append((edge.name,float(edge.branch_length)))
+                path_lengths.append((edge.name, float(edge.branch_length)))
+
+        # store path information in the dictionary
         species_to_path[leaf.name] = path_lengths
+
     return species_to_path
 
 
-def get_matches(locs1,locs2,sp):
-    l1,l2 = 0,0
-    return_list = [None]*len(locs1)
+def is_subtype(type1, type2):
+    """Check if site type 1 is contained in site type 2"""
+    if type2 == '6mer':
+        return True
+    elif type1 == '8mer-1a':
+        return True
+    else:
+        return type1 == type2
+
+
+def get_matches(locs1, locs2, sp, ref_types, this_types):
+    """Check if any of the site locations match those in the reference"""
+    l1, l2 = 0, 0
+    return_list = [None] * len(locs1)
     while (l1 < len(locs1)) & (l2 < len(locs2)):
         diff = (locs1[l1] - locs2[l2])
         if diff > 1:
@@ -100,119 +159,173 @@ def get_matches(locs1,locs2,sp):
         elif diff < -1:
             l1 += 1
         else:
-            return_list[l1] = sp
+            if is_subtype(this_types[l2], ref_types[l1]):
+                return_list[l1] = sp
             l1 += 1
             l2 += 1
     return return_list
 
 
-def find_aligning_species(utr_df,seedm8,species,num_sites):
-    if (len(species) == 0) | (config.REF_SPECIES not in species):
-        return ['']*num_sites
+def find_aligning_species(utr_df, seed, species_with_mirna, num_sites,
+                          site_types, window_dict):
+    """
+    Finds species with sites in the same location as the reference
+
+    Parameters
+    ----------
+    utr_df: pandas DataFrame, dataframe of aligned sequences
+    seed: string
+    species_with_mirna: list of species that contain this miRNA
+    num_sites: int, number of sites the reference utr has
+    site_types: list of the site types of this miRNA in this gene (in order)
+    window_dict: dictionary of site sequences for this seed
+
+    Output
+    ------
+    list: list of lists, for each site in the reference, return a list of
+        species that have a site in the same location
+    """
+
+    # check that there are other species and that this mirna exists in the ref
+    if (len(species_with_mirna) == 0) | \
+            (config.REF_SPECIES not in species_with_mirna):
+        return [''] * num_sites
 
     utr_df = utr_df.groupby('Species').first()
     ref_utr = utr_df.loc[config.REF_SPECIES]['UTR sequence']
 
-    site = utils.reverse_complement(seedm8)
+    site = utils.rev_comp(seed)
     regex = '-*'.join(site[1:])
 
-    # ref_sites = [(m.start(),m.start() + re.match(regex,ref_utr[m.start():]).end()-1,[]) for m in re.finditer('(?={})'.format(regex), ref_utr)]
-    ref_sites = [m.start() for m in re.finditer('(?={})'.format(regex), ref_utr)]
-
+    # find the site locations in the reference, including gaps
+    ref_sites = [m.start() for m in re.finditer('(?={})'.format(regex),
+                                                ref_utr)]
     species_list = []
 
     # loop through species that have this miRNA
-    for sp in species:
+    for sp in species_with_mirna:
 
         # species is not in alignment
         if sp not in utr_df.index:
             continue
 
-        # species is the reference species, don't need to recalculate sites -> we know they all align to the reference
+        # species is the reference species, don't need to recalculate sites
+        # we know they all align to the reference
         elif sp == config.REF_SPECIES:
-            species_list.append([sp]*len(ref_sites))
+            species_list.append([sp] * len(ref_sites))
 
-        # look for sites in this species that align to sites in the reference species
+        # look for sites in this species that align to sites in the ref species
         else:
-            sites = [m.start() for m in re.finditer('(?={})'.format(regex), utr_df.loc[sp]['UTR sequence'])]
-            if len(sites) != 0:
-                species_list.append(get_matches(ref_sites,sites,sp))
+            this_utr = utr_df.loc[sp]['UTR sequence']
 
+            this_sites = [m.start()
+                          for m
+                          in re.finditer('(?={})'.format(regex), this_utr)]
 
+            this_types = get_site_info(this_utr.replace('-', ''),
+                                       seed, window_dict)[2]
+            if len(this_sites) != 0:
+                species_list.append(get_matches(ref_sites, this_sites,
+                                                sp, site_types, this_types))
+
+    # if we didn't find any aligning species, return empty strings
     if len(species_list) == 0:
-        return ['']*num_sites
-
+        return [''] * num_sites
 
     species_list = zip(*species_list)
     species_list = [[x for x in sp if x is not None] for sp in species_list]
-    # species_list = [';'.join(sp) for sp in species_list]
+
     return species_list
-    
 
-def get_site_info(utr_no_gaps,seed,window_dict):
-    # print utr_no_gaps
-    rc_seed = utils.reverse_complement(seed)
-    locs = [m.start() for m in re.finditer('(?={})'.format(rc_seed[1:]),utr_no_gaps)]
 
-    windows = [utr_no_gaps[x-1:x+7] for x in locs]
+def get_site_info(utr_no_gaps, seed, window_dict):
+    """Find site locations and site types for a utr and a miRNA"""
+
+    # take the reverse complement
+    rc_seed = utils.rev_comp(seed)
+
+    # find all the seed match locations
+    locs = [m.start() for m
+            in re.finditer('(?={})'.format(rc_seed[1:]), utr_no_gaps)]
+
+    # use the window dictionary to determin site types
+    windows = [utr_no_gaps[x - 1: x + 7] for x in locs]
     site_types = [window_dict[x] for x in windows]
 
-    site_starts = [x - 1 - int(y in ['8mer-1a','7mer-m8']) for (x,y) in zip(locs,site_types)]
-    site_ends = [x + 5 + int(y in ['8mer-1a','7mer-1a']) for (x,y) in zip(locs,site_types)]
-    
-    return tuple(site_starts),tuple(site_ends),tuple(site_types)
+    # find site starts and ends
+    site_starts = [x - 1 - int(y in ['8mer-1a', '7mer-m8'])
+                   for (x, y) in zip(locs, site_types)]
+
+    site_ends = [x + 5 + int(y in ['8mer-1a', '7mer-1a'])
+                 for (x, y) in zip(locs, site_types)]
+
+    return tuple(site_starts), tuple(site_ends), tuple(site_types)
 
 
 def get_branch_length_score_generic(species_list):
+    """Calculate BLS from the generic tree"""
+
+    # get rid of any -1, which indicate the utr does not have the site
     species_list = [x for x in species_list if x != -1]
+
+    # check if any species have the site
     if len(species_list) == 0:
         return 0
+
+    # retreive tree path information from the generic tree
     all_paths = []
     for sp in species_list:
         all_paths += config.SPECIES_TO_PATH[sp]
     all_paths = list(set(list(all_paths)))
+
+    # calculate branch length score
     bls = sum([x[1] for x in all_paths])
+
     return bls
 
-def get_branch_length_score_specific(species_list,bin):
+
+def get_branch_length_score_specific(species_list, bin):
+    """Calculate BLS from a bin-specific tree"""
+
+    # get rid of any -1, which indicate the utr does not have the site
     species_list = [x for x in species_list if x != -1]
+
+    # check if any species have the site
     if len(species_list) == 0:
         return 0
+
+    # retreive tree path information from the bin-specific tree
     all_paths = []
     for sp in species_list:
         all_paths += config.TREES[bin][sp]
     all_paths = list(set(list(all_paths)))
+
+    # calculate branch length score
     bls = sum([x[1] for x in all_paths])
+
     return bls
 
-def calculate_pct(aligning_species,bin,site_type,seed):
+
+def calculate_pct(aligning_species, bin, site_type, seed):
+    """From the list of aligning species, calculate PCT"""
+
+    # check if the site type is a 6mer or doesn't exist in the species
     if site_type == '6mer':
-        return 0.0,0
+        return 0.0, 0.0, 0
 
     if seed not in config.PARAMS[site_type]:
-        return 0.0,0
+        return 0.0, 0.0, 0
 
-    bls = get_branch_length_score_specific(aligning_species,bin)
-    b0,b1,b2,b3 = config.PARAMS[site_type][seed]
+    # use the helper function to calculate the bls
+    bls = get_branch_length_score_specific(aligning_species, bin)
 
-    score = max(0.0, b0 + (b1/(1.0 + (np.exp(((0.0-b2)*bls) + b3)))))
+    # retrieve constants
+    b0, b1, b2, b3 = config.PARAMS[site_type][seed]
 
+    # calculate PCT as described in the paper
+    score = max(0.0, b0 + (b1 / (1.0 + (np.exp(((0.0 - b2) * bls) + b3)))))
+
+    # check if the PCT meets the conservation threshold
     conserved = int(score >= config.CONSERVATION_CUTOFFS[site_type])
 
-    return [score, conserved]
-
-
-
-# seed = 'GAGGUAG'
-# seed_window_dict = get_seed_window_dict([seed])
-# #      0         1         2         3         4         5         6         7   
-# #      xxxxx-xx                   o-ooooo           ooooooo                     ooooooo     
-# utr = 'CUACC-UCAAUUUGGA-CUCCCUUUCAU-ACCUCUGGAA-GAGCUUACCUCAUCCUAGCAUAAAAUCUUUGCACUACCUC'
-# utr2 = 'CUACG-UCAAUUUGGA-CUCCCUUUCAU-UCCUCUGGAA-GAGCUUACCUCAUCCUAGCAUAAAAUCUUUGCACUAGCUC'
-# utr_df = pd.DataFrame({'Species': ['9606','9615'],'UTR sequence': [utr,utr2]})
-# utr_df = utr_df.set_index('Species')
-# utr_no_gaps = utr.replace('-','')
-# print find_sites(utr_df,seed)
-# window_dict = seed_window_dict[seed]
-
-
+    return [bls, score, conserved]
