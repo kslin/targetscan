@@ -1,4 +1,3 @@
-import re
 import sys
 import time
 
@@ -9,7 +8,6 @@ import pandas as pd
 import config
 import find_sites_helpers as fsh
 import tasks
-import utils
 
 
 def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
@@ -33,7 +31,7 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     # import UTR information
     UTRS, UTRS_REF = fsh.import_utrs(UTR_FILE)
 
-    print "{} seconds".format(time.time() - t0)
+    print "{} seconds\n".format(time.time() - t0)
 
 
     # Find sites
@@ -125,7 +123,7 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     site_info['Site type'] = new_sites
     site_info['Site start'] = new_starts
     site_info = site_info[site_info['Site start'] >= config.TOO_CLOSE]
-    print "{} seconds".format(time.time() - t0)
+    print "{} seconds\n".format(time.time() - t0)
 
 
     # Write to file
@@ -134,12 +132,16 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
 
     site_info.to_csv(OUT_FILE, sep='\t', index=False)
 
-    print "{} seconds".format(time.time() - t0)
+    print "{} seconds\n".format(time.time() - t0)
 
-    print "Total time elapsed: {}".format(time.time() - T0)
+    print "Total time for finding sites: {}\n".format(time.time() - T0)
 
 
 if __name__ == '__main__':
+
+    # import utils file
+    fsh.load_src("utils", "../utils.py")
+    import utils
 
     # Get file of aligned UTRS and the file for writing output
     SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE = sys.argv[1:]

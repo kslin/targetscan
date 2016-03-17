@@ -68,7 +68,7 @@ def main(UTR_FILE, OUT_FILE):
         writer.writerows(bins)
     print '{} seconds\n'.format(time.time()-t0)
 
-    print 'Total time elapsed: {}'.format(time.time()-T0)
+    print 'Total time for calculating bins: {}\n'.format(time.time()-T0)
 
 
 if __name__ == '__main__':

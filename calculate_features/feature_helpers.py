@@ -8,6 +8,14 @@ import numpy as np
 import pandas as pd
 
 import config
+
+def load_src(name, fpath):
+    """Allow us to import python files from a parent directory"""
+    import os, imp
+    return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
+
+# import utils file
+load_src("utils", "../utils.py")
 import utils
 
 
@@ -81,7 +89,7 @@ def calculate_threep_score(mirna, utr, site_type, site_start):
     mirna_3p = mirna[8:]
     trailing = utr[max(0, site_start-15):
                    site_start - int(site_type in ['6mer', '7mer-1a'])]
-    utr_5p = utils.reverse_complement(trailing)
+    utr_5p = utils.rev_comp(trailing)
 
     # initiate array for dynamic programming search
     scores = np.empty((len(utr_5p) + 1, len(mirna_3p) + 1))

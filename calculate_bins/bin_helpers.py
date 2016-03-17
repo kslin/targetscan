@@ -7,7 +7,6 @@ from Bio import Phylo
 import numpy as np
 
 import config
-from utils import reverse_complement
 
 
 def parse_tree(tree_file, ref_species):

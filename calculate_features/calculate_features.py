@@ -1,8 +1,4 @@
-import ast
 import os
-import re
-from string import maketrans
-import subprocess
 import sys
 import time
 
@@ -11,8 +7,8 @@ import numpy as np
 import pandas as pd
 
 import config
+import feature_helpers
 from tasks import calculate_all_features
-import utils
 
 
 def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
@@ -43,7 +39,7 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
     TARGETS[['UTR BLS', 'Branch length score']] = \
         TARGETS[['UTR BLS', 'Branch length score']].astype(float)
 
-    print '{} seconds'.format(time.time() - t0)
+    print '{} seconds\n'.format(time.time() - t0)
 
     # calculate features
     t0 = time.time()
@@ -95,7 +91,7 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
                        'PCT', 'Conserved', 'Branch length score', 'UTR BLS']
 
     os.rmdir(config.RNAPLFOLD_FOLDER)
-    print '{} seconds'.format(time.time() - t0)
+    print '{} seconds\n'.format(time.time() - t0)
 
     # add TA and SPS data
     t0 = time.time()
@@ -114,7 +110,7 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
     TARGETS['TA'] = list(TA_SPS['TA'])
     TARGETS['SPS'] = list(TA_SPS['SPS'])
 
-    print '{} seconds'.format(time.time() - t0)
+    print '{} seconds\n'.format(time.time() - t0)
 
     # add ORF length and ORF 8mer count
     t0 = time.time()
@@ -131,10 +127,10 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
     TARGETS['ORF length'] = [np.log10(len(orf)) if len(orf) > 0 else 0
                              for orf in orf_list]
     zipped = zip(orf_list, list(TARGETS['Seed']))
-    TARGETS['ORF 8mers'] = [orf.count(utils.reverse_complement(seed) + 'A')
+    TARGETS['ORF 8mers'] = [orf.count(utils.rev_comp(seed) + 'A')
                             for (orf, seed) in zipped]
 
-    print '{} seconds'.format(time.time() - t0)
+    print '{} seconds\n'.format(time.time() - t0)
 
     # write to file
     t0 = time.time()
@@ -142,9 +138,9 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
 
     TARGETS.to_csv(OUT_FILE, sep='\t', index=False)
 
-    print '{} seconds'.format(time.time() - t0)
+    print '{} seconds\n'.format(time.time() - t0)
 
-    print 'Total time elapsed: {}'.format(time.time() - T0)
+    print 'Total time for calculating features: {}\n'.format(time.time() - T0)
 
 
 if __name__ == '__main__':
@@ -155,6 +151,10 @@ if __name__ == '__main__':
 
     # Get file of aligned UTRS and the file for writing output
     MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE = sys.argv[1:]
+
+    # import utils file
+    feature_helpers.load_src("utils", "../utils.py")
+    import utils
 
     # run main code
     main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE)

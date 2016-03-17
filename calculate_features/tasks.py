@@ -9,7 +9,10 @@ import numpy as np
 import pandas as pd
 
 import config
-import individual_feature_functions as iff
+import feature_helpers as feat
+
+# import utils file
+feat.load_src("utils", "../utils.py")
 import utils
 
 
@@ -39,7 +42,7 @@ def calculate_all_features(gene, group, mirna_df):
     utr_bls = group.iloc[0]['UTR BLS']
 
     # run RNAplfold
-    rnaplfold_data = iff.get_rnaplfold_data(gene, utr)
+    rnaplfold_data = feat.get_rnaplfold_data(gene, utr)
 
     data = []
     for row in group.iterrows():
@@ -60,7 +63,7 @@ def calculate_all_features(gene, group, mirna_df):
         num_mirnas = len(mirnas)
 
         # calculate offset 6mer counts
-        rc_seed = utils.reverse_complement(seed)
+        rc_seed = utils.rev_comp(seed)
         off6 = rc_seed[:-1]
 
         # find where offset 6mer locations are
@@ -74,27 +77,27 @@ def calculate_all_features(gene, group, mirna_df):
         off6m_locs = list(set(off6m_locs_total) - set(off6mer_locs_overlaps))
 
         # features that depend on rest of miRNA
-        three_p_scores = [iff.calculate_threep_score(mirna, utr,
-                                                     site_type, site_start)
+        three_p_scores = [feat.calculate_threep_score(mirna, utr,
+                                                      site_type, site_start)
                           for mirna in mirnas]
         mirna1As, mirna1Cs, mirna1Gs = zip(*[[int(mirna[0] == nt)
                                               for nt in ['A', 'C', 'G']]
                                              for mirna in mirnas])
 
         # only depends on seed and site
-        local_au_score = iff.calculate_local_au(utr, site_type,
-                                                site_start, site_end)
+        local_au_score = feat.calculate_local_au(utr, site_type,
+                                                 site_start, site_end)
 
-        min_dist_score = iff.calculate_min_dist(site_start,
-                                                site_end,
-                                                airs_subdf)
+        min_dist_score = feat.calculate_min_dist(site_start,
+                                                 site_end,
+                                                 airs_subdf)
 
-        utr_length_score = iff.calculate_weighted_utr_length(site_end,
+        utr_length_score = feat.calculate_weighted_utr_length(site_end,
+                                                              airs_subdf)
+
+        off6mer_score = feat.calculate_weighted_num_off6mers(off6m_locs,
+                                                             site_end,
                                                              airs_subdf)
-
-        off6mer_score = iff.calculate_weighted_num_off6mers(off6m_locs,
-                                                            site_end,
-                                                            airs_subdf)
 
         mirna8A, mirna8C, mirna8G = tuple([int(seed[-1] == nt)
                                            for nt in ['A', 'C', 'G']])

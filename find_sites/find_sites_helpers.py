@@ -1,3 +1,5 @@
+import imp
+import os
 import re
 import time
 
@@ -6,6 +8,14 @@ import numpy as np
 import pandas as pd
 
 import config
+
+def load_src(name, fpath):
+    """Allow us to import python files from a parent directory"""
+    import os, imp
+    return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
+
+# import utils file
+load_src("utils", "../utils.py")
 import utils
 
 
