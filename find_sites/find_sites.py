@@ -57,8 +57,7 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
         })
 
     # filter out rows where the miRNA seed does not appear in the UTR sequence
-    site_df['Num sites'] = [utils.occurrences(utr,
-                                              utils.rev_comp(seed[:-1]))
+    site_df['Num sites'] = [fsh.occurrences(utr, fsh.rev_comp(seed[:-1]))
                             for (utr, seed)
                             in zip(site_df['UTR sequence'], site_df['Seed'])]
     site_df = site_df[site_df['Num sites'] > 0]
@@ -134,10 +133,6 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
 
 
 if __name__ == '__main__':
-
-    # import utils file
-    fsh.load_src("utils", "../utils.py")
-    import utils
 
     # Get file of aligned UTRS and the file for writing output
     SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE = sys.argv[1:]

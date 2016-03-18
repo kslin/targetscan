@@ -11,10 +11,6 @@ import pandas as pd
 import config
 import feature_helpers as feat
 
-# import utils file
-feat.load_src("utils", "../utils.py")
-import utils
-
 
 def calculate_all_features(gene, group, mirna_df):
     """
@@ -63,7 +59,7 @@ def calculate_all_features(gene, group, mirna_df):
         num_mirnas = len(mirnas)
 
         # calculate offset 6mer counts
-        rc_seed = utils.rev_comp(seed)
+        rc_seed = feat.rev_comp(seed)
         off6 = rc_seed[:-1]
 
         # find where offset 6mer locations are

@@ -1,6 +1,6 @@
 import os
-import re
 import shlex
+from string import maketrans
 import subprocess
 import sys
 
@@ -9,14 +9,24 @@ import pandas as pd
 
 import config
 
-def load_src(name, fpath):
-    """Allow us to import python files from a parent directory"""
-    import os, imp
-    return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
 
-# import utils file
-load_src("utils", "../utils.py")
-import utils
+def rev_comp(seq):
+    """
+    Parameters:
+    ==========
+    seq: string, sequence to get reverse complement of
+
+    Returns:
+    =======
+    float: reverse complement of seq in all caps
+    """
+    seq = seq.upper()
+    intab = "AUCG"
+    outtab = "UAGC"
+    trantab = maketrans(intab, outtab)
+    seq = seq[::-1]
+    seq = seq.translate(trantab)
+    return seq
 
 
 def get_rnaplfold_data(gene, utr):
@@ -89,7 +99,7 @@ def calculate_threep_score(mirna, utr, site_type, site_start):
     mirna_3p = mirna[8:]
     trailing = utr[max(0, site_start-15):
                    site_start - int(site_type in ['6mer', '7mer-1a'])]
-    utr_5p = utils.rev_comp(trailing)
+    utr_5p = rev_comp(trailing)
 
     # initiate array for dynamic programming search
     scores = np.empty((len(utr_5p) + 1, len(mirna_3p) + 1))
