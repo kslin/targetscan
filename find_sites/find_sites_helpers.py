@@ -1,10 +1,6 @@
-import imp
-import os
 import re
-import sys
-import time
-
 from string import maketrans
+import sys
 
 from Bio import Phylo
 import numpy as np
