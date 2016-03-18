@@ -21,7 +21,7 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     t0 = time.time()
 
     SEED_TO_SPECIES, SEEDS = fsh.import_seeds(SEED_FILE)
-    num_seeds = len(SEEDS)
+    num_seed = len(SEEDS)
 
     # Import gene to bin information
     BINS = pd.read_csv(BIN_FILE, sep='\t', header=None)
@@ -33,15 +33,14 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
 
     print "{} seconds\n".format(time.time() - t0)
 
-
     # Find sites
     print 'Finding sites...'
     t0 = time.time()
 
     # create a dataframe that lists every miRNA/utr combination possible
-    gene_list = list(UTRS_REF.index) * num_seeds
-    sequence_list = list(UTRS_REF['UTR sequence']) * num_seeds
-    bin_list = list(BINS.loc[list(UTRS_REF.index)]['Bin'].fillna(1)) * num_seeds
+    gene_list = list(UTRS_REF.index) * num_seed
+    sequence_list = list(UTRS_REF['UTR sequence']) * num_seed
+    bin_list = list(BINS.loc[list(UTRS_REF.index)]['Bin'].fillna(1)) * num_seed
     num_genes = len(UTRS_REF)
     seed_list = []
     family_list = []
@@ -122,7 +121,6 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     site_info['Site start'] = new_starts
     site_info = site_info[site_info['Site start'] >= config.TOO_CLOSE]
     print "{} seconds\n".format(time.time() - t0)
-
 
     # Write to file
     print "Writing outfile..."
