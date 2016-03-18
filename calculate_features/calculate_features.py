@@ -50,7 +50,7 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
     num_genes = len(groups)
 
     # make a folder for RNAPLFOLD data
-    if os.path.isdir(config.RNAPLFOLD_FOLDER) == False:
+    if os.path.isdir(config.RNAPLFOLD_FOLDER) is False:
         os.mkdir(config.RNAPLFOLD_FOLDER)
 
     data = []
