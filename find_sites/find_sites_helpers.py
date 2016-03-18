@@ -4,20 +4,52 @@ import re
 import sys
 import time
 
+from string import maketrans
+
 from Bio import Phylo
 import numpy as np
 import pandas as pd
 
 import config
 
-def load_src(name, fpath):
-    """Allow us to import python files from a parent directory"""
-    import os, imp
-    return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
 
-# import utils file
-load_src("utils", "../utils.py")
-import utils
+def rev_comp(seq):
+    """
+    Parameters:
+    ==========
+    seq: string, sequence to get reverse complement of
+
+    Returns:
+    =======
+    float: reverse complement of seq in all caps
+    """
+    seq = seq.upper()
+    intab = "AUCG"
+    outtab = "UAGC"
+    trantab = maketrans(intab, outtab)
+    seq = seq[::-1]
+    seq = seq.translate(trantab)
+    return seq
+
+
+def occurrences(string, sub):
+    """
+    Parameters:
+    ==========
+    string: string, longer string
+    sub: string, substring you are looking for
+
+    Returns:
+    =======
+    int: number of occurences of sub in string, includes overlaps
+    """
+    count = start = 0
+    while True:
+        start = string.find(sub, start) + 1
+        if start > 0:
+            count += 1
+        else:
+            return count
 
 
 def import_seeds(seed_file):
@@ -153,7 +185,7 @@ def get_site_info(utr_no_gaps, seed):
                       (1, 1): '8mer-1a'}
 
     # take the reverse complement
-    rc_seed = utils.rev_comp(seed)
+    rc_seed = rev_comp(seed)
 
     # find all the seed match locations
     locs = [m.start() for m
@@ -205,7 +237,7 @@ def find_aligning_species(utr_df, seed, species_with_mirna,
     utr_df = utr_df.groupby('Species').first()
     ref_utr = utr_df.loc[config.REF_SPECIES]['UTR sequence']
 
-    site = utils.rev_comp(seed)
+    site = rev_comp(seed)
     regex = '-*'.join(site[1:])
 
     # find the site locations in the reference, including gaps

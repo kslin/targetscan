@@ -127,7 +127,7 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
     TARGETS['ORF length'] = [np.log10(len(orf)) if len(orf) > 0 else 0
                              for orf in orf_list]
     zipped = zip(orf_list, list(TARGETS['Seed']))
-    TARGETS['ORF 8mers'] = [orf.count(utils.rev_comp(seed) + 'A')
+    TARGETS['ORF 8mers'] = [orf.count(feature_helpers.rev_comp(seed) + 'A')
                             for (orf, seed) in zipped]
 
     print '{} seconds\n'.format(time.time() - t0)
@@ -151,10 +151,6 @@ if __name__ == '__main__':
 
     # Get file of aligned UTRS and the file for writing output
     MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE = sys.argv[1:]
-
-    # import utils file
-    feature_helpers.load_src("utils", "../utils.py")
-    import utils
 
     # run main code
     main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE)
