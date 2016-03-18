@@ -1,6 +1,7 @@
 import imp
 import os
 import re
+import sys
 import time
 
 from Bio import Phylo
@@ -19,40 +20,6 @@ load_src("utils", "../utils.py")
 import utils
 
 
-def get_seed_window_dict(seeds):
-    """
-    Given a list of seeds, find all the possible site types
-
-    Parameters:
-    ----------
-    seeds: list of strings
-
-    Output:
-    ------
-    dictionary of dictionaries
-    """
-    seed_window_dict = {}
-
-    # for each seed, construct a dictionary of {sequence: site type}
-    for seed in seeds:
-        site = utils.rev_comp(seed)
-        window_dict = {}
-        window_dict[site + 'A'] = '8mer-1a'
-        for nt in ['C', 'U', 'G', 'X']:
-            window_dict[site + nt] = '7mer-m8'
-        other_nts = ['A', 'U', 'C', 'G', 'X']
-        other_nts.remove(site[0])
-        for nt1 in other_nts:
-            window_dict[nt1 + site[1:] + 'A'] = '7mer-1a'
-            for nt8 in ['C', 'U', 'G', 'X']:
-                window_dict[nt1 + site[1:] + nt8] = '6mer'
-
-        # link the seed-specific dictionary to the seed
-        seed_window_dict[seed] = window_dict
-
-    return seed_window_dict
-
-
 def import_seeds(seed_file):
     """Import and organize seed information"""
 
@@ -60,7 +27,7 @@ def import_seeds(seed_file):
     seeds = pd.read_csv(seed_file, sep='\t', header=None).fillna('')
     seeds.columns = ['miRNA family', 'Seed', 'Species with miRNA']
     seeds = seeds.set_index('Seed')
-    seed_window_dict = get_seed_window_dict(list(seeds.index))
+    # seed_window_dict = get_seed_window_dict(list(seeds.index))
 
     # make a dictionary listing all the species that have a particular microRNA
     seed_to_species = {}
@@ -72,7 +39,7 @@ def import_seeds(seed_file):
             else:
                 seed_to_species[row[0]] = []
 
-    return seed_window_dict, seed_to_species, seeds
+    return seed_to_species, seeds
 
 
 def import_utrs(utr_file):
@@ -176,8 +143,43 @@ def get_matches(locs1, locs2, sp, ref_types, this_types):
     return return_list
 
 
-def find_aligning_species(utr_df, seed, species_with_mirna, num_sites,
-                          site_types, window_dict):
+def get_site_info(utr_no_gaps, seed):
+    """Find site locations and site types for a utr and a miRNA"""
+
+    # (m8, 1a) matches linked to site type
+    site_type_dict = {(0, 0): '6mer',
+                      (0, 1): '7mer-1a',
+                      (1, 0): '7mer-m8',
+                      (1, 1): '8mer-1a'}
+
+    # take the reverse complement
+    rc_seed = utils.rev_comp(seed)
+
+    # find all the seed match locations
+    locs = [m.start() for m
+            in re.finditer('(?={})'.format(rc_seed[1:]), utr_no_gaps)]
+
+    # if we find no seed matches, return empty tuples
+    if len(locs) == 0:
+        return (), (), ()
+
+    # compare the 1a and m8 positions to determine site types
+    site_types = [site_type_dict[((utr_no_gaps[x-1] == rc_seed[0]),
+                                  (utr_no_gaps[x+6] == 'A'))]
+                  for x in locs]
+
+    # find site starts and ends
+    site_starts = [x - 1 - int(y in ['8mer-1a', '7mer-m8'])
+                   for (x, y) in zip(locs, site_types)]
+
+    site_ends = [x + 5 + int(y in ['8mer-1a', '7mer-1a'])
+                 for (x, y) in zip(locs, site_types)]
+
+    return tuple(site_starts), tuple(site_ends), tuple(site_types)
+
+
+def find_aligning_species(utr_df, seed, species_with_mirna,
+                          num_sites, site_types):
     """
     Finds species with sites in the same location as the reference
 
@@ -188,7 +190,6 @@ def find_aligning_species(utr_df, seed, species_with_mirna, num_sites,
     species_with_mirna: list of species that contain this miRNA
     num_sites: int, number of sites the reference utr has
     site_types: list of the site types of this miRNA in this gene (in order)
-    window_dict: dictionary of site sequences for this seed
 
     Output
     ------
@@ -232,8 +233,7 @@ def find_aligning_species(utr_df, seed, species_with_mirna, num_sites,
                           for m
                           in re.finditer('(?={})'.format(regex), this_utr)]
 
-            this_types = get_site_info(this_utr.replace('-', ''),
-                                       seed, window_dict)[2]
+            this_types = get_site_info(this_utr.replace('-', ''), seed)[2]
             if len(this_sites) != 0:
                 species_list.append(get_matches(ref_sites, this_sites,
                                                 sp, site_types, this_types))
@@ -246,30 +246,6 @@ def find_aligning_species(utr_df, seed, species_with_mirna, num_sites,
     species_list = [[x for x in sp if x is not None] for sp in species_list]
 
     return species_list
-
-
-def get_site_info(utr_no_gaps, seed, window_dict):
-    """Find site locations and site types for a utr and a miRNA"""
-
-    # take the reverse complement
-    rc_seed = utils.rev_comp(seed)
-
-    # find all the seed match locations
-    locs = [m.start() for m
-            in re.finditer('(?={})'.format(rc_seed[1:]), utr_no_gaps)]
-
-    # use the window dictionary to determin site types
-    windows = [utr_no_gaps[x - 1: x + 7] for x in locs]
-    site_types = [window_dict[x] for x in windows]
-
-    # find site starts and ends
-    site_starts = [x - 1 - int(y in ['8mer-1a', '7mer-m8'])
-                   for (x, y) in zip(locs, site_types)]
-
-    site_ends = [x + 5 + int(y in ['8mer-1a', '7mer-1a'])
-                 for (x, y) in zip(locs, site_types)]
-
-    return tuple(site_starts), tuple(site_ends), tuple(site_types)
 
 
 def get_branch_length_score_generic(species_list):

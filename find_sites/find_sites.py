@@ -20,7 +20,7 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     print "Importing seed, bin, and utr files..."
     t0 = time.time()
 
-    SEED_WINDOW_DICT, SEED_TO_SPECIES, SEEDS = fsh.import_seeds(SEED_FILE)
+    SEED_TO_SPECIES, SEEDS = fsh.import_seeds(SEED_FILE)
     num_seeds = len(SEEDS)
 
     # Import gene to bin information
@@ -75,9 +75,8 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
         futures = []
         for gene, group in groups:
             futures.append(executor.submit(tasks.get_all_site_info, gene,
-                                           group, UTRS.loc[gene],
-                                           SEED_TO_SPECIES,
-                                           SEED_WINDOW_DICT))
+                                           group, UTRS.loc[[gene]],
+                                           SEED_TO_SPECIES))
 
             # add a sleep to prevent the executor from getting clogged
             time.sleep(0.0001)
@@ -92,9 +91,8 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     else:
         for gene, group in groups:
             site_info += tasks.get_all_site_info(gene, group,
-                                                 UTRS.loc[gene],
-                                                 SEED_TO_SPECIES,
-                                                 SEED_WINDOW_DICT)
+                                                 UTRS.loc[[gene]],
+                                                 SEED_TO_SPECIES)
 
     # convert site information into a dataframe and add column names
     site_info = pd.DataFrame(site_info)

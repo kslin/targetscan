@@ -1,7 +1,7 @@
 import find_sites_helpers as fsh
 
 
-def get_all_site_info(gene, group, utr_df, seed_to_species, seed_window_dict):
+def get_all_site_info(gene, group, utr_df, seed_to_species):
     """
     Given a list of aligned sequences of a single gene, find the site
     information for all the miRNAs with sites in this gene
@@ -9,10 +9,12 @@ def get_all_site_info(gene, group, utr_df, seed_to_species, seed_window_dict):
     Parameters:
     ----------
     gene: string, name of gene
+
     group: pandas DataFrame, dataframe of miRNA information
+
     utr_df: pandas DataFrame, dataframe of aligned sequences
+
     seed_to_species: dictionary, links seed to list of species with that miRNA
-    seed_window_dict: dictionary, lists all possible site types of every seed
 
     Output:
     ------
@@ -30,11 +32,9 @@ def get_all_site_info(gene, group, utr_df, seed_to_species, seed_window_dict):
         utr_no_gaps = row[1]['UTR sequence']
         num_sites = row[1]['Num sites']
         bin = row[1]['Bin']
-        window_dict = seed_window_dict[seed]
         species = seed_to_species[seed]
         site_starts, site_ends, site_types = fsh.get_site_info(utr_no_gaps,
-                                                               seed,
-                                                               window_dict)
+                                                               seed)
 
         # make sure we found the same number of sites as we did before
         assert(num_sites == len(site_starts))
@@ -42,7 +42,7 @@ def get_all_site_info(gene, group, utr_df, seed_to_species, seed_window_dict):
         # find species that have a site at the same place as the ref species
         aligning_species = fsh.find_aligning_species(utr_df, seed,
                                                      species, num_sites,
-                                                     site_types, window_dict)
+                                                     site_types)
 
         # calculate branch length scores and PCTs
         blss, pct, conserved = zip(*[fsh.calculate_pct(aligning, bin,
