@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 import config
+from targetscan import utils
 
 
 def rev_comp(seq):

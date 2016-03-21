@@ -58,12 +58,11 @@ def get_median_bls(gene, group):
                     for x in subdf.index]
     subdf = subdf.sort_values(by=['bls'])
 
-
     # use the helper function to get the branch length score
     bls = bin_helpers.get_median_binned_list(subdf['count'],
                                              subdf['bls'],
                                              len(ref_utr)-num_gap, num_gap)
 
-    bls = round(bls,8)
+    bls = round(bls, 8)
 
     return [gene, bls, bin_helpers.get_bin(bls)]
