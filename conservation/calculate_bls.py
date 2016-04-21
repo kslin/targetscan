@@ -1,4 +1,3 @@
-import csv
 import string
 import sys
 import time
@@ -30,7 +29,7 @@ def main(UTR_FILE, OUT_FILE):
     # Calculate branch length scores
     print 'Calculating bls... '
     t0 = time.time()
-    bins = []
+    blss = []
     num_utrs = len(UTRS)
 
     # Use the parallel version of the code if indicated by the user
@@ -48,24 +47,26 @@ def main(UTR_FILE, OUT_FILE):
         # Collect job results as they come in
         # since we do not care about the order in which jobs finish
         for future in concurrent.futures.as_completed(futures):
-            bins.append(future.result())
+            blss.append(future.result())
 
         executor.shutdown()
 
     # Otherwise, use the non-parallel version
     else:
         for i, (gene, utr_group) in enumerate(UTRS):
-            bins.append(get_bls(gene, utr_group))
+            blss.append(get_bls(gene, utr_group))
 
     print '{} seconds\n'.format(time.time()-t0)
+
 
     # WRITE RESULTS TO A FILE
     print 'Writing to file... '
     t0 = time.time()
 
     with open(OUT_FILE, 'wb') as f:
-        writer = csv.writer(f, delimiter='\t')
-        writer.writerows(bins)
+        for b in blss:
+            f.write(b+'\n')
+
     print '{} seconds\n'.format(time.time()-t0)
 
     print 'Total time for calculating bls: {}\n'.format(time.time()-T0)

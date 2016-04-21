@@ -60,5 +60,5 @@ def get_bls(gene, group):
 
     # add in bls
     subdf['bls'] = [bls_dict[x] for x in subdf['pattern']]
-
-    return [gene] + list(subdf['bls'])
+    # print [gene] + list(subdf['bls'])
+    return ','.join([gene] + list(subdf['bls']))

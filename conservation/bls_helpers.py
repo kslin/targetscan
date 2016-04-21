@@ -112,7 +112,7 @@ def get_branch_length_score(species_list):
 
     # if the species list is empty, return a bls of 0
     if len(species_list) == 0:
-        return 0
+        return '0'
 
     # get all the edges that connect these species to the reference
     all_paths = []
@@ -123,7 +123,7 @@ def get_branch_length_score(species_list):
     all_paths = list(set(list(all_paths)))
     bls = sum([x[1] for x in all_paths])
 
-    return bls
+    return '{:.8}'.format(bls)
 
 
 def get_median_binned_list(counts, values, total, num_gap):
