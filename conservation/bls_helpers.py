@@ -5,6 +5,7 @@ import time
 
 from Bio import Phylo
 import numpy as np
+from scipy.stats import ttest_ind
 
 import config
 
@@ -112,7 +113,7 @@ def get_branch_length_score(species_list):
 
     # if the species list is empty, return a bls of 0
     if len(species_list) == 0:
-        return '0'
+        return 0.0
 
     # get all the edges that connect these species to the reference
     all_paths = []
@@ -123,7 +124,7 @@ def get_branch_length_score(species_list):
     all_paths = list(set(list(all_paths)))
     bls = sum([x[1] for x in all_paths])
 
-    return '{:.8}'.format(bls)
+    return bls
 
 
 def get_median_binned_list(counts, values, total, num_gap):
@@ -194,3 +195,44 @@ def get_bin(bls):
 
     # use binary search to find biggest threshold <= to the bls
     return bisect.bisect_right(thresholds, bls)
+
+def get_transitions(obs, tol=-30, window=50):
+    """
+    Find discrete sections of differing conservation in a gene
+
+    Parameters
+    ----------
+    obs: list of floats, branch length scores of every index in gene
+
+    tol: float, log(p-value) cutoff
+
+    window: int, window size for searching
+
+    Output
+    ------
+    list of ints: list of indexes where conservation patterns shift
+    """
+    diffs = []
+    signs = []
+    for i in range(2,len(obs)-2):
+        left = np.array(obs[max(0,i-window):i])
+        right = np.array(obs[i:min(i+window, len(obs))])
+        t, p = ttest_ind(left, right, equal_var=False)
+        signs.append(np.nanmean(left) > np.nanmean(right))
+        diffs.append(np.log(p))
+
+    locs = [i+2 for (i,x) in enumerate(diffs) if x <= tol]
+    peaks = [x for x in diffs if x <= tol]
+    i = 0
+    while i < (len(locs)-1):
+        if ((locs[i+1] - locs[i]) < 20) and (signs[i] == signs[i+1]):
+            if peaks[i+1] < peaks[i]:
+                peaks.pop(i)
+                locs.pop(i)
+            else:
+                peaks.pop(i+1)
+                locs.pop(i+1)
+        else:
+            i += 1
+
+    return [0] + locs + [len(obs)]

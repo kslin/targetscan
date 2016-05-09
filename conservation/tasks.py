@@ -60,5 +60,8 @@ def get_bls(gene, group):
 
     # add in bls
     subdf['bls'] = [bls_dict[x] for x in subdf['pattern']]
-    # print [gene] + list(subdf['bls'])
-    return ','.join([gene] + list(subdf['bls']))
+
+    transitions = [str(x) for x in bls_helpers.get_transitions(list(subdf['bls']))]
+    bls_strings = ['{:.8}'.format(x) for x in list(subdf['bls'])]
+
+    return ','.join([gene] + bls_strings) + '|' + ','.join(transitions)

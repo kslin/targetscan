@@ -106,6 +106,8 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     # Truncate sites that overlap into the first 15 nts of the UTR
     new_sites = list(site_info['Site type'])
     new_starts = list(site_info['Site start'])
+    new_pct = list(site_info['PCT'])
+    new_conserved = list(site_info['Conserved'])
     for i in range(len(new_sites)):
         if new_starts[i] == config.TOO_CLOSE - 1:
             site = new_sites[i]
@@ -115,10 +117,20 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
             elif site == '7mer-m8':
                 new_sites[i] = '6mer'
                 new_starts[i] += 1
+                new_pct[i] = 0
+                new_conserved[i] = 0
+                print 'blah'
 
     site_info['Site type'] = new_sites
     site_info['Site start'] = new_starts
+    site_info['PCT'] = new_pct
+    site_info['Conserved'] = new_conserved
     site_info = site_info[site_info['Site start'] >= config.TOO_CLOSE]
+
+    temp = site_info[site_info['Site type'] == '6mer']
+    temp = temp[temp['PCT'] != 0]
+    print temp
+
     print "{} seconds\n".format(time.time() - t0)
 
     # Write to file

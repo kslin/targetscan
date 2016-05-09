@@ -111,7 +111,7 @@ def calculate_threep_score(mirna, utr, site_type, site_start):
         for j, nt2 in enumerate(mirna_3p):
             if nt1 == nt2:
                 new_score = 0.5 + 0.5 * ((j > 3) & (j < 8))
-                if np.isnan(scores[i, j]) is False:
+                if np.isnan(scores[i, j]) == False:
                     new_score += scores[i, j]
                     scores[i + 1, j + 1] = new_score
                     possible_scores.append(new_score)
