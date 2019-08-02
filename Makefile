@@ -3,56 +3,14 @@ clean:
 
 
 bins:
-	cd calculate_bins && python calculate_bins.py ../../nano/nano_utrs.txt ../../nano/kathy_bins_nano.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bins_tiny_outfile.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tinier_utrs.txt ../../outfiles/bins_tinier_outfile.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tiny_utrs.txt ../../outfiles/bins_small_outfile.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bins_big_outfile.txt
-
-sites:
-	# cd find_sites && python find_sites.py ../../nano/nano_seeds.txt ../../nano/kathy_bins_nano.txt ../../nano/nano_utrs.txt ../../nano/kathy_sites_nano.txt
-	# cd find_sites && python find_sites.py ../../infiles/miR_Family_info_sample.txt ../../outfiles/bins_tiny_outfile.txt ../../infiles/UTR_Sequences_sample.txt ../../outfiles/sites_tiny_outfile.txt
-	# cd find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_tinier_outfile.txt ../../infiles/tinier_utrs.txt ../../outfiles/sites_tinier_outfile.txt
-	# cd find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_small_outfile.txt ../../infiles/tiny_utrs.txt ../../outfiles/sites_small_outfile.txt
-	cd find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_big_outfile.txt ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/sites_big_outfile.txt
-
-features:
-	# cd calculate_features/ && python calculate_features.py  ../../infiles/miR_for_context_scores.sample.txt ../../outfiles/sites_tiny_outfile.txt ../../infiles/ORF_Sequences_sample.txt ../../outfiles/tiny_output.txt
-	cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_tinier_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/tinier_output.txt
-	# cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_small_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/small_output.txt
-	# cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/big_output.txt
-
-all:
-# SAMPLES
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bins_tiny_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/miR_Family_info_sample.txt ../../outfiles/bins_tiny_outfile.txt ../../infiles/UTR_Sequences_sample.txt ../../outfiles/sites_tiny_outfile.txt \
-	# && cd ../calculate_features/ && python calculate_features.py  ../../infiles/miR_for_context_scores.sample.txt ../../outfiles/sites_tiny_outfile.txt ../../infiles/ORF_Sequences_sample.txt ../../outfiles/tiny_output.txt
-# TINIER
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tinier_utrs.txt ../../outfiles/bins_tinier_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_tinier_outfile.txt ../../infiles/tinier_utrs.txt ../../outfiles/sites_tinier_outfile.txt \
-	# && cd ../calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_tinier_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/tinier_output.txt
-# FINAL
-	cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bins_big_outfile.txt \
-	&& cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_big_outfile.txt ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/sites_big_outfile.txt \
-	# && cd ../calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/big_output.txt
-
-all2:
-# SAMPLES
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bins_tiny_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/miR_Family_info_sample.txt ../../outfiles/bins_tiny_outfile.txt ../../infiles/UTR_Sequences_sample.txt ../../outfiles/sites_tiny_outfile.txt \
-	# && cd ../conservation && python calculate_bls.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bls_tiny_outfile.txt \
-	# && cd ../calculate_features2 && python calculate_features.py  ../../infiles/miR_for_context_scores.sample.txt ../../outfiles/sites_tiny_outfile.txt ../../infiles/ORF_Sequences_sample.txt ../../outfiles/bls_tiny_outfile.txt ../../outfiles/tiny_output2.txt
-# TINIER
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tinier_utrs.txt ../../outfiles/bins_tinier_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_tinier_outfile.txt ../../infiles/tinier_utrs.txt ../../outfiles/sites_tinier_outfile.txt \
-	# && cd ../conservation && python calculate_bls.py ../../infiles/tinier_utrs.txt ../../outfiles/bls_tinier_outfile.txt \
-	# && cd ../calculate_features2/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_tinier_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/bls_tinier_outfile.txt ../../outfiles/tinier_output.txt
-# FINAL
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bins_big_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_big_outfile.txt ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/sites_big_outfile.txt \
-	# && cd ../conservation && python calculate_bls.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bls_big_outfile.txt \
-	# && cd ../calculate_features2 && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/bls_big_outfile.txt ../../outfiles/big_output.txt
-	cd calculate_features2 && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/bls_big_outfile.txt ../../outfiles/big_output.txt
-
+	mkdir -p /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated
+	python2 calculate_bins/calculate_bins.py \
+		--utr3_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/UTR_Sequences.txt \
+		--tree_file PCT_parameters/Tree.generic.txt \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt \
+		--ref_species 9606 \
+		--futures
+	sort "-k1,1" /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt -o /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt
+	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/bins.txt
 
 

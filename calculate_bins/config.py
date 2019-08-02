@@ -3,7 +3,6 @@ import os
 import bin_helpers
 
 
-FUTURES = os.environ.get('FUTURES', False)
 REF_SPECIES = os.environ.get('REF_SPECIES', '9606')
 print("ref_species: {}".format(REF_SPECIES))
 
