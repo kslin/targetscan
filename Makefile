@@ -14,3 +14,13 @@ bins:
 	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/bins.txt
 
 
+sites:
+	python2 find_sites/find_sites.py \
+		--seed_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/seed_file.txt \
+		--bin_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt \
+		--utr3_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/UTR_Sequences.txt \
+		--tree_path PCT_parameters/ \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt \
+		--ribosome_shadow 14 \
+		--ref_species 9606
+	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/sites.txt

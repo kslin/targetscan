@@ -1,3 +1,7 @@
+#!/usr/bin/python2
+
+from optparse import OptionParser
+import os
 import sys
 import time
 
@@ -5,31 +9,61 @@ import concurrent.futures
 import numpy as np
 import pandas as pd
 
-import config
 import find_sites_helpers as fsh
 import tasks
 
 
-def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
+if __name__ == '__main__':
+
+    parser = OptionParser()
+    parser.add_option("--seed_file", dest="SEED_FILE", help="file with miRNA seeds")
+    parser.add_option("--bin_file", dest="BIN_FILE", help="output from calculate_bins")
+    parser.add_option("--utr3_file", dest="UTR3_FILE", help="3\'UTR sequences in tab delimited format")
+    parser.add_option("--tree_path", dest="TREE_PATH", help="path to all phylogenetic trees in newick format")
+    parser.add_option("--out", dest="OUT_FILE", help="where to write bin output")
+    parser.add_option("--ribosome_shadow", dest="RIBOSOME_SHADOW", type=int, default=14, help="length of ribosome shadow")
+    parser.add_option("--ref_species", dest="REF_SPECIES", help="reference species", default='9606')
+    parser.add_option("--futures", dest="FUTURES", help="if true, run in parallel", default=False, action='store_true')
+
+    (options, args) = parser.parse_args()
+
     T0 = time.time()
 
     # disable chained assignment warning
     pd.options.mode.chained_assignment = None
 
+    # parse the generic tree
+    SPECIES_TO_PATH = fsh.parse_tree(os.path.join(options.TREE_PATH, 'Tree.generic.txt'), options.REF_SPECIES)
+
+    # parse bin-specific trees
+    TREES = {}
+    for i in range(10):
+        TREES[i+1] = fsh.parse_tree(os.path.join(options.TREE_PATH, 'Tree.bin_{:02}.txt'.format(i+1)),
+                                    options.REF_SPECIES)
+
     # import seed information
     print "Importing seed, bin, and utr files..."
     t0 = time.time()
 
-    SEED_TO_SPECIES, SEEDS = fsh.import_seeds(SEED_FILE)
+    SEED_TO_SPECIES, SEEDS = fsh.import_seeds(options.SEED_FILE)
     num_seed = len(SEEDS)
 
+    # parse constants for calculating PCT
+    PCT_PARAMS = []
+    for site_type in ['8mer-1a', '7mer-m8', '7mer-1a']:
+        temp = pd.read_csv(os.path.join(options.TREE_PATH, site_type.replace('-', '_')+'_PCT_parameters.txt'), sep='\t')
+        temp['Site_type'] = site_type
+
+        PCT_PARAMS.append(temp)
+    PCT_PARAMS = pd.concat(PCT_PARAMS).set_index(['Seed', 'Site_type'])
+
     # Import gene to bin information
-    BINS = pd.read_csv(BIN_FILE, sep='\t', header=None)
+    BINS = pd.read_csv(options.BIN_FILE, sep='\t', header=None)
     BINS.columns = ['Gene', 'BLS', 'Bin']
     BINS = BINS.set_index('Gene')
 
     # import UTR information
-    UTRS, UTRS_REF = fsh.import_utrs(UTR_FILE)
+    UTRS, UTRS_REF = fsh.import_utrs(options.UTR3_FILE, options.REF_SPECIES)
 
     print "{} seconds\n".format(time.time() - t0)
 
@@ -68,13 +102,21 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     site_info = []
 
     # if indicated by the user, use the parallel implementation
-    if config.FUTURES:
+    if options.FUTURES:
         executor = concurrent.futures.ProcessPoolExecutor()
         futures = []
         for gene, group in groups:
-            futures.append(executor.submit(tasks.get_all_site_info, gene,
-                                           group, UTRS.loc[[gene]],
-                                           SEED_TO_SPECIES))
+            futures.append(executor.submit(
+                tasks.get_all_site_info,
+                gene,
+                group,
+                UTRS.loc[[gene]],
+                SEED_TO_SPECIES,
+                options.REF_SPECIES,
+                SPECIES_TO_PATH,
+                TREES,
+                PCT_PARAMS
+            ))
 
             # add a sleep to prevent the executor from getting clogged
             time.sleep(0.0001)
@@ -88,9 +130,15 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     # otherwise, use the nonparallel implementation
     else:
         for gene, group in groups:
-            site_info += tasks.get_all_site_info(gene, group,
-                                                 UTRS.loc[[gene]],
-                                                 SEED_TO_SPECIES)
+            site_info += tasks.get_all_site_info(
+                gene, group,
+                UTRS.loc[[gene]],
+                SEED_TO_SPECIES,
+                options.REF_SPECIES,
+                SPECIES_TO_PATH,
+                TREES,
+                PCT_PARAMS
+            )
 
     # convert site information into a dataframe and add column names
     site_info = pd.DataFrame(site_info)
@@ -109,7 +157,7 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     new_pct = list(site_info['PCT'])
     new_conserved = list(site_info['Conserved'])
     for i in range(len(new_sites)):
-        if new_starts[i] == config.TOO_CLOSE - 1:
+        if new_starts[i] == options.RIBOSOME_SHADOW - 1:
             site = new_sites[i]
             if site == '8mer-1a':
                 new_sites[i] = '7mer-1a'
@@ -119,17 +167,12 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
                 new_starts[i] += 1
                 new_pct[i] = 0
                 new_conserved[i] = 0
-                print 'blah'
 
     site_info['Site type'] = new_sites
     site_info['Site start'] = new_starts
     site_info['PCT'] = new_pct
     site_info['Conserved'] = new_conserved
-    site_info = site_info[site_info['Site start'] >= config.TOO_CLOSE]
-
-    temp = site_info[site_info['Site type'] == '6mer']
-    temp = temp[temp['PCT'] != 0]
-    print temp
+    site_info = site_info[site_info['Site start'] >= options.RIBOSOME_SHADOW]
 
     print "{} seconds\n".format(time.time() - t0)
 
@@ -137,17 +180,8 @@ def main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE):
     print "Writing outfile..."
     t0 = time.time()
 
-    site_info.to_csv(OUT_FILE, sep='\t', index=False)
+    site_info.to_csv(options.OUT_FILE, sep='\t', index=False, float_format='%.6f')
 
     print "{} seconds\n".format(time.time() - t0)
 
     print "Total time for finding sites: {}\n".format(time.time() - T0)
-
-
-if __name__ == '__main__':
-
-    # Get file of aligned UTRS and the file for writing output
-    SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE = sys.argv[1:]
-
-    # run main code
-    main(SEED_FILE, BIN_FILE, UTR_FILE, OUT_FILE)

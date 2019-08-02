@@ -6,8 +6,6 @@ from Bio import Phylo
 import numpy as np
 import pandas as pd
 
-import config
-
 
 def rev_comp(seq):
     """
@@ -70,7 +68,7 @@ def import_seeds(seed_file):
     return seed_to_species, seeds
 
 
-def import_utrs(utr_file):
+def import_utrs(utr_file, ref_species):
     """Import and organize utr information"""
 
     # read in utr file
@@ -84,7 +82,7 @@ def import_utrs(utr_file):
     UTRS = UTRS.set_index('Gene')
 
     # make a separate dataframe for the utr sequences of the reference species
-    UTRS_REF = UTRS[UTRS['Species'] == config.REF_SPECIES]
+    UTRS_REF = UTRS[UTRS['Species'] == ref_species]
     UTRS_REF['UTR sequence'] = [x.replace('-', '')
                                 for x in UTRS_REF['UTR sequence']]
 
@@ -156,6 +154,9 @@ def is_subtype(type1, type2):
 def get_matches(sp, ref_starts, ref_ends, ref_types,
                 this_starts, this_ends, this_types):
     """Check if any of the site locations match those in the reference"""
+
+    REQUIRED_OVERLAP = 2
+
     l1, l2 = 0, 0
     return_list = [None] * len(ref_starts)
     while (l1 < len(ref_starts)) & (l2 < len(this_starts)):
@@ -163,11 +164,11 @@ def get_matches(sp, ref_starts, ref_ends, ref_types,
         start2, end2 = this_starts[l2], this_ends[l2]
         # xxxxxxxx
         #     xxxxxxxx
-        if (end1-start2) < config.REQUIRED_OVERLAP:
+        if (end1-start2) < REQUIRED_OVERLAP:
             l1 += 1
         #     xxxxxxxx
         # xxxxxxxx
-        elif (end2-start1) < config.REQUIRED_OVERLAP:
+        elif (end2-start1) < REQUIRED_OVERLAP:
             l2 += 1
         else:
             if is_subtype(this_types[l2], ref_types[l1]):
@@ -234,7 +235,7 @@ def get_gapped_ends(utr, regex, types):
     return starts, ends
 
 
-def find_aligning_species(utr_df, seed, species_with_mirna,
+def find_aligning_species(utr_df, seed, species_with_mirna, ref_species,
                           num_sites, site_types):
     """
     Finds species with sites in the same location as the reference
@@ -244,6 +245,7 @@ def find_aligning_species(utr_df, seed, species_with_mirna,
     utr_df: pandas DataFrame, dataframe of aligned sequences
     seed: string
     species_with_mirna: list of species that contain this miRNA
+    ref_species: reference species
     num_sites: int, number of sites the reference utr has
     site_types: list of the site types of this miRNA in this gene (in order)
 
@@ -255,11 +257,11 @@ def find_aligning_species(utr_df, seed, species_with_mirna,
 
     # check that there are other species and that this mirna exists in the ref
     if (len(species_with_mirna) == 0) | \
-            (config.REF_SPECIES not in species_with_mirna):
+            (ref_species not in species_with_mirna):
         return [''] * num_sites
 
     utr_df = utr_df.groupby('Species').first()
-    ref_utr = utr_df.loc[config.REF_SPECIES]['UTR sequence']
+    ref_utr = utr_df.loc[ref_species]['UTR sequence']
 
     site = rev_comp(seed)
     regex = '-*'.join(site[1:])
@@ -278,7 +280,7 @@ def find_aligning_species(utr_df, seed, species_with_mirna,
 
         # species is the reference species, don't need to recalculate sites
         # we know they all align to the reference
-        elif sp == config.REF_SPECIES:
+        elif sp == ref_species:
             species_list.append([sp] * len(ref_starts))
 
         # look for sites in this species that align to sites in the ref species
@@ -303,7 +305,7 @@ def find_aligning_species(utr_df, seed, species_with_mirna,
     return species_list
 
 
-def get_branch_length_score_generic(species_list):
+def get_branch_length_score_generic(species_list, species_to_path):
     """Calculate BLS from the generic tree"""
 
     # get rid of any -1, which indicate the utr does not have the site
@@ -316,7 +318,7 @@ def get_branch_length_score_generic(species_list):
     # retreive tree path information from the generic tree
     all_paths = []
     for sp in species_list:
-        all_paths += config.SPECIES_TO_PATH[sp]
+        all_paths += species_to_path[sp]
     all_paths = list(set(list(all_paths)))
 
     # calculate branch length score
@@ -325,7 +327,7 @@ def get_branch_length_score_generic(species_list):
     return bls
 
 
-def get_branch_length_score_specific(species_list, bin):
+def get_branch_length_score_specific(species_list, bin_specific_tree):
     """Calculate BLS from a bin-specific tree"""
 
     # get rid of any -1, which indicate the utr does not have the site
@@ -338,7 +340,7 @@ def get_branch_length_score_specific(species_list, bin):
     # retreive tree path information from the bin-specific tree
     all_paths = []
     for sp in species_list:
-        all_paths += config.TREES[bin][sp]
+        all_paths += bin_specific_tree[sp]
     all_paths = list(set(list(all_paths)))
 
     # calculate branch length score
@@ -347,26 +349,31 @@ def get_branch_length_score_specific(species_list, bin):
     return bls
 
 
-def calculate_pct(aligning_species, bin, site_type, seed):
+def calculate_pct(aligning_species, bin_specific_tree, site_type, seed, pct_params):
     """From the list of aligning species, calculate PCT"""
 
     # check if the site type is a 6mer or doesn't exist in the species
     if site_type == '6mer':
         return 0.0, 0.0, 0
 
-    if seed not in config.PARAMS[site_type]:
+    if seed not in pct_params.index.levels[0].values:
         return 0.0, 0.0, 0
 
     # use the helper function to calculate the bls
-    bls = get_branch_length_score_specific(aligning_species, bin)
+    bls = get_branch_length_score_specific(aligning_species, bin_specific_tree)
 
     # retrieve constants
-    b0, b1, b2, b3 = config.PARAMS[site_type][seed]
+    try:
+        b0, b1, b2, b3 = pct_params.loc[(seed, site_type)].values
+    except:
+        raise ValueError('{} and {} not in PCT parameter file'.format(seed, site_type))
 
     # calculate PCT as described in the paper
     score = max(0.0, b0 + (b1 / (1.0 + (np.exp(((0.0 - b2) * bls) + b3)))))
 
+    CONSERVATION_CUTOFFS = {'8mer-1a': 1.8, '7mer-m8': 2.8, '7mer-1a': 3.6}  # from code on TargetScan website
+
     # check if the PCT meets the conservation threshold
-    conserved = int(score >= config.CONSERVATION_CUTOFFS[site_type])
+    conserved = int(score >= CONSERVATION_CUTOFFS[site_type])
 
     return [bls, score, conserved]
