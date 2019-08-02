@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 
 import csv
+from optparse import OptionParser
 import string
 import sys
 import time
@@ -13,7 +14,14 @@ import config
 from tasks import get_median_bls
 
 
-def main(UTR_FILE, OUT_FILE):
+if __name__ == '__main__':
+
+    parser = OptionParser()
+    parser.add_option("--utr3_file", dest="UTR3_FILE", help="3\'UTR sequences in tab delimited format")
+    parser.add_option("--out", dest="OUT_FILE", help="where to write bin output")
+
+    (options, args) = parser.parse_args()
+
     T0 = time.time()
 
     # PROCESS UTR FILE
@@ -21,7 +29,7 @@ def main(UTR_FILE, OUT_FILE):
     t0 = time.time()
 
     # Read UTR file into a pandas dataframe and group UTRs by gene
-    UTRS = pd.read_csv(UTR_FILE, sep='\t', header=None)
+    UTRS = pd.read_csv(options.UTR3_FILE, sep='\t', header=None)
     UTRS.columns = ['Gene ID', 'Species ID', 'UTR sequence']
     UTRS[['Gene ID', 'Species ID', 'UTR sequence']] \
         = UTRS[['Gene ID', 'Species ID', 'UTR sequence']].astype(str)
@@ -65,19 +73,9 @@ def main(UTR_FILE, OUT_FILE):
     print 'Writing to file... '
     t0 = time.time()
 
-    with open(OUT_FILE, 'wb') as f:
+    with open(options.OUT_FILE, 'wb') as f:
         writer = csv.writer(f, delimiter='\t')
         writer.writerows(bins)
     print '{} seconds\n'.format(time.time()-t0)
 
     print 'Total time for calculating bins: {}\n'.format(time.time()-T0)
-
-
-if __name__ == '__main__':
-
-    # Get file of aligned UTRS and the file for writing output
-    UTR_FILE = sys.argv[1]
-    OUT_FILE = sys.argv[2]
-
-    # run main code
-    main(UTR_FILE, OUT_FILE)
