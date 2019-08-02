@@ -153,16 +153,22 @@ def is_subtype(type1, type2):
         return type1 == type2
 
 
-def get_matches(locs1, locs2, sp, ref_types, this_types):
+def get_matches(sp, ref_starts, ref_ends, ref_types,
+                this_starts, this_ends, this_types):
     """Check if any of the site locations match those in the reference"""
     l1, l2 = 0, 0
-    return_list = [None] * len(locs1)
-    while (l1 < len(locs1)) & (l2 < len(locs2)):
-        diff = (locs1[l1] - locs2[l2])
-        if diff > 1:
-            l2 += 1
-        elif diff < -1:
+    return_list = [None] * len(ref_starts)
+    while (l1 < len(ref_starts)) & (l2 < len(this_starts)):
+        start1, end1 = ref_starts[l1], ref_ends[l1]
+        start2, end2 = this_starts[l2], this_ends[l2]
+        # xxxxxxxx
+        #     xxxxxxxx
+        if (end1-start2) < config.REQUIRED_OVERLAP:
             l1 += 1
+        #     xxxxxxxx
+        # xxxxxxxx
+        elif (end2-start1) < config.REQUIRED_OVERLAP:
+            l2 += 1
         else:
             if is_subtype(this_types[l2], ref_types[l1]):
                 return_list[l1] = sp
@@ -206,6 +212,28 @@ def get_site_info(utr_no_gaps, seed):
     return tuple(site_starts), tuple(site_ends), tuple(site_types)
 
 
+def get_gapped_ends(utr, regex, types):
+    """Finds the site ends in the utrs with gaps"""
+    type_lengths = {'8mer-1a': 8, '7mer-m8': 7, '7mer-1a': 7, '6mer': 6}
+    starts = [m.start() for m in re.finditer('(?={})'.format(regex), utr)]
+    ends = []
+    for i, s in enumerate(starts):
+        if types[i] in ['8mer-1a','7mer-m8']:
+            s -= 1
+            while utr[s] == '-':
+                s -= 1
+            starts[i] = s
+        length = type_lengths[types[i]] - 1
+        end = s+1
+        while length > 0:
+            if utr[end] != '-':
+                length -= 1
+            end += 1
+        ends.append(end)
+
+    return starts, ends
+
+
 def find_aligning_species(utr_df, seed, species_with_mirna,
                           num_sites, site_types):
     """
@@ -237,8 +265,8 @@ def find_aligning_species(utr_df, seed, species_with_mirna,
     regex = '-*'.join(site[1:])
 
     # find the site locations in the reference, including gaps
-    ref_sites = [m.start() for m in re.finditer('(?={})'.format(regex),
-                                                ref_utr)]
+    ref_starts, ref_ends = get_gapped_ends(ref_utr, regex, site_types)
+
     species_list = []
 
     # loop through species that have this miRNA
@@ -251,20 +279,19 @@ def find_aligning_species(utr_df, seed, species_with_mirna,
         # species is the reference species, don't need to recalculate sites
         # we know they all align to the reference
         elif sp == config.REF_SPECIES:
-            species_list.append([sp] * len(ref_sites))
+            species_list.append([sp] * len(ref_starts))
 
         # look for sites in this species that align to sites in the ref species
         else:
             this_utr = utr_df.loc[sp]['UTR sequence']
 
-            this_sites = [m.start()
-                          for m
-                          in re.finditer('(?={})'.format(regex), this_utr)]
-
             this_types = get_site_info(this_utr.replace('-', ''), seed)[2]
-            if len(this_sites) != 0:
-                species_list.append(get_matches(ref_sites, this_sites,
-                                                sp, site_types, this_types))
+
+            this_starts, this_ends = get_gapped_ends(this_utr, regex, this_types)
+
+            if len(this_starts) != 0:
+                species_list.append(get_matches(sp, ref_starts, ref_ends, site_types,
+                                                this_starts, this_ends, this_types))
 
     # if we didn't find any aligning species, return empty strings
     if len(species_list) == 0:

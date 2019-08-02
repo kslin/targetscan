@@ -1,3 +1,5 @@
+#!/usr/bin/python2
+
 import os
 import sys
 import time
@@ -57,6 +59,7 @@ def main(MIRNA_FILE, TARGET_FILE, ORF_FILE, OUT_FILE):
 
     # run calculations in parallel if indicated
     if config.FUTURES:
+        print("Running parallel version")
         executor = concurrent.futures.ProcessPoolExecutor()
         futures = []
         for i, (gene, group) in enumerate(groups):

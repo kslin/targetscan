@@ -7,9 +7,12 @@ import find_sites_helpers as fsh
 
 # define global variables
 FUTURES = os.environ.get('FUTURES', False)
-REF_SPECIES = '9606'
+REF_SPECIES = os.environ.get('REF_SPECIES', '9606')
+print("ref_species: {}".format(REF_SPECIES))
+
 TOO_CLOSE = 14
 CONSERVATION_CUTOFFS = {'8mer-1a': 1.8, '7mer-m8': 2.8, '7mer-1a': 3.6}
+REQUIRED_OVERLAP = 2
 
 # specify paths to parameter files
 TREE_FILE_GENERIC = '../PCT_parameters/Tree.generic.txt'

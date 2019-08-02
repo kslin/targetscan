@@ -31,6 +31,8 @@ def get_median_bls(gene, group):
 
     # otherwise, isolate the reference utr sequence and drop from the rest
     ref_utr = group.loc[config.REF_SPECIES][['UTR sequence']].values[0]
+    if len(ref_utr.replace('-', '')) == 0:  # return 0 if the reference UTR is all gaps
+        return [gene, 0, 0]
     group = group.drop(config.REF_SPECIES)
 
     # if the reference utr was the only one in the alignment, return 0
