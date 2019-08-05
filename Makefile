@@ -24,3 +24,17 @@ sites:
 		--ribosome_shadow 14 \
 		--ref_species 9606
 	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/sites.txt
+
+
+features:
+	python2 calculate_features/calculate_features.py \
+		--mirna_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/mirna_file.txt \
+		--site_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt \
+		--ta_sps_file calculate_features/TA_SPS_by_seed_region.txt \
+		--orf_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/ORF_Sequences_Human.txt \
+		--rnaplfold_temp /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features.txt \
+		--ref_species 9606 \
+		--futures
+	rm -rf /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP
+# 	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/features.txt

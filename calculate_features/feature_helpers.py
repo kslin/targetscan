@@ -7,8 +7,6 @@ import sys
 import numpy as np
 import pandas as pd
 
-import config
-
 
 def rev_comp(seq):
     """
@@ -29,7 +27,7 @@ def rev_comp(seq):
     return seq
 
 
-def get_rnaplfold_data(gene, utr):
+def get_rnaplfold_data(gene, utr, temp_folder):
     """
     Run RNAplfold and get pairing probabilities for a utr
 
@@ -38,6 +36,8 @@ def get_rnaplfold_data(gene, utr):
     gene: string, name of gene
 
     utr: string, utr sequence
+
+    temp_folder: string, folder for storing RNAplfold temporary files
 
     Output
     ------
@@ -49,7 +49,7 @@ def get_rnaplfold_data(gene, utr):
 
     # navigate to the folder for RNAplfold data
     cwd = os.getcwd()
-    os.chdir(config.RNAPLFOLD_FOLDER)
+    os.chdir(temp_folder)
 
     # write sequence to a temporary file
     mytempfile = 'temp_{}.fa'.format(gene_name)
@@ -162,7 +162,7 @@ def calculate_local_au(utr, site_type, site_start, site_end):
     return weighted / total
 
 
-def calculate_min_dist(site_start, site_end, airs_subdf):
+def calculate_min_dist_withAIRs(site_start, site_end, airs_subdf):
     """
     Calculate the min dist score
 
@@ -178,6 +178,7 @@ def calculate_min_dist(site_start, site_end, airs_subdf):
     ------
     float: min dist score
     """
+
     # only get alternative isoforms that contain this site
     airs_subdf = airs_subdf[airs_subdf['AIR end'] >= site_end]
     min_dists = [min(site_start, x - site_end)
@@ -192,7 +193,7 @@ def calculate_min_dist(site_start, site_end, airs_subdf):
     return np.log10(weighted)
 
 
-def calculate_weighted_utr_length(site_end, airs_subdf):
+def calculate_weighted_utr_length_withAIRs(site_end, airs_subdf):
     """
     Calculate the utr length score
 
@@ -218,7 +219,7 @@ def calculate_weighted_utr_length(site_end, airs_subdf):
     return np.log10(weighted)
 
 
-def calculate_weighted_num_off6mers(off6m_locs, site_end, airs_subdf):
+def calculate_weighted_num_off6mers_withAIRs(off6m_locs, site_end, airs_subdf):
     """
     Calculate the weighted number of offset 6mers score
 
