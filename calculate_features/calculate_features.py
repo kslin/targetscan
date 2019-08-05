@@ -21,13 +21,12 @@ if __name__ == '__main__':
     parser.add_option("--ta_sps_file", dest="TA_SPS_FILE", help="TA and SPS by seed region")
     parser.add_option("--orf_file", dest="ORF_FILE", help="ORF sequences in tab delimited format")
     parser.add_option("--rnaplfold_temp", dest="RNAPLFOLD_TEMP", help="temp folder to write RNAplfold outputs")
-    parser.add_option("--out", dest="OUT_FILE", help="where to write bin output")
+    parser.add_option("--out", dest="OUT_FILE", help="prefix for where to write outputs")
     parser.add_option("--ref_species", dest="REF_SPECIES", help="reference species", default='9606')
     parser.add_option("--airs_file", dest="AIRS_FILE", default=None, help="affected isoform ratios")
     parser.add_option("--futures", dest="FUTURES", help="if true, run in parallel", default=False, action='store_true')
 
     (options, args) = parser.parse_args()
-
 
     T0 = time.time()
 
@@ -136,7 +135,7 @@ if __name__ == '__main__':
                        'siRNA 1A', 'siRNA 1C', 'siRNA 1G',
                        'siRNA 8A', 'siRNA 8C', 'siRNA 8G',
                        'site 8A', 'site 8C', 'site 8G',
-                       'PCT', 'Conserved', 'Branch length score', 'UTR BLS']
+                       'PCT', 'Conserved', 'Branch length score', 'UTR BLS', 'AIR']
 
     print '{} seconds\n'.format(time.time() - t0)
 

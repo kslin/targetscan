@@ -1,3 +1,4 @@
+import bisect
 import re
 import os
 import shlex
@@ -27,6 +28,11 @@ def calculate_all_features(gene, group, mirna_df, rnaplfold_temp, airs_subdf=Non
     ------
     list of lists: list of features for each miRNA
     """
+
+    if airs_subdf is not None:
+        airs_subdf = airs_subdf.sort_values('AIR start')
+        airs_subdf['AIR ratio'] /= 100
+        air_boundaries = list(airs_subdf['AIR end'].values)
 
     # get gene-specific data
     utr = group.iloc[0]['UTR sequence']
@@ -85,6 +91,7 @@ def calculate_all_features(gene, group, mirna_df, rnaplfold_temp, airs_subdf=Non
             min_dist_score = np.log10(min(site_start, utr_length - site_end + 1))
             utr_length_score = np.log10(utr_length)
             off6mer_score = np.log10(len(off6m_locs) + 1)
+            this_site_air = 1.0
         else:
             min_dist_score = feat.calculate_min_dist_withAIRs(site_start,
                                                      site_end,
@@ -96,6 +103,8 @@ def calculate_all_features(gene, group, mirna_df, rnaplfold_temp, airs_subdf=Non
             off6mer_score = feat.calculate_weighted_num_off6mers_withAIRs(off6m_locs,
                                                                  site_end,
                                                                  airs_subdf)
+            air_bin = bisect.bisect_left(air_boundaries, site_end)
+            this_site_air = airs_subdf.iloc[air_bin]['AIR ratio']
 
         mirna8A, mirna8C, mirna8G = tuple([int(seed[-1] == nt)
                                            for nt in ['A', 'C', 'G']])
@@ -123,7 +132,7 @@ def calculate_all_features(gene, group, mirna_df, rnaplfold_temp, airs_subdf=Non
                      three_p_score, local_au_score, min_dist_score,
                      utr_length_score, off6mer_score, sa_score,
                      mirna1A, mirna1C, mirna1G, mirna8A, mirna8C, mirna8G,
-                     site8A, site8C, site8G, pct, conserved, bls, utr_bls]
+                     site8A, site8C, site8G, pct, conserved, bls, utr_bls, this_site_air]
                     for (three_p_score, mirna, mirbase,
                          mirna1A, mirna1C, mirna1G)
                     in zipped]

@@ -25,7 +25,6 @@ sites:
 		--ref_species 9606
 	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/sites.txt
 
-
 features:
 	python2 calculate_features/calculate_features.py \
 		--mirna_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/mirna_file.txt \
@@ -34,7 +33,25 @@ features:
 		--orf_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/ORF_Sequences_Human.txt \
 		--rnaplfold_temp /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP \
 		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features.txt \
-		--ref_species 9606 \
-		--futures
+		--ref_species 9606
 	rm -rf /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP
-# 	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/features.txt
+	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/features.txt
+
+features_with_airs:
+	python2 calculate_features/calculate_features.py \
+		--mirna_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/mirna_file.txt \
+		--site_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt \
+		--ta_sps_file calculate_features/TA_SPS_by_seed_region.txt \
+		--orf_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/ORF_Sequences_Human.txt \
+		--rnaplfold_temp /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features_with_airs.txt \
+		--ref_species 9606 \
+		--airs_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/AIRs_all_cell_lines.txt 
+	rm -rf /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP
+
+scores:
+	mkdir -p /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated2
+	python2 calculate_predictions/calculate_predictions.py \
+		--feature_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features_with_airs.txt \
+		--coeff_file calculate_predictions/Agarwal_2015_parameters.txt \
+		--out_dir /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated2
