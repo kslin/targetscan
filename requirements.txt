@@ -1,4 +1,0 @@
-numpy==1.10.4
-pandas==0.17.1
-biopython==1.66
-futures==3.0.5
