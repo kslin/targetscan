@@ -1,7 +1,7 @@
 import find_sites_helpers as fsh
 
 
-def get_all_site_info(gene, group, utr_df, seed_to_species):
+def get_all_site_info(gene, group, utr_df, seed_to_species, ref_species, species_to_path, tree_bin_dict, pct_params):
     """
     Given a list of aligned sequences of a single gene, find the site
     information for all the miRNAs with sites in this gene
@@ -15,6 +15,14 @@ def get_all_site_info(gene, group, utr_df, seed_to_species):
     utr_df: pandas DataFrame, dataframe of aligned sequences
 
     seed_to_species: dictionary, links seed to list of species with that miRNA
+
+    ref_species: string, reference species
+
+    species_to_path: dictionary, tree path for each species
+
+    tree_bin_dict: dictionary, bin to bin-specific tree
+
+    pct_params: DataFrame, PCT parameters
 
     Output:
     ------
@@ -31,8 +39,8 @@ def get_all_site_info(gene, group, utr_df, seed_to_species):
         family = row[1]['miRNA family']
         utr_no_gaps = row[1]['UTR sequence']
         num_sites = row[1]['Num sites']
-        bin = row[1]['Bin']
-        species = seed_to_species[seed]
+        bin_specific_tree = tree_bin_dict[row[1]['Bin']]
+        species_with_mirna = seed_to_species[seed]
         site_starts, site_ends, site_types = fsh.get_site_info(utr_no_gaps,
                                                                seed)
 
@@ -41,17 +49,18 @@ def get_all_site_info(gene, group, utr_df, seed_to_species):
 
         # find species that have a site at the same place as the ref species
         aligning_species = fsh.find_aligning_species(utr_df, seed,
-                                                     species, num_sites,
+                                                     species_with_mirna, ref_species,
+                                                     num_sites,
                                                      site_types)
 
         # calculate branch length scores and PCTs
-        blss, pct, conserved = zip(*[fsh.calculate_pct(aligning, bin,
-                                                       site_type, seed)
+        blss, pct, conserved = zip(*[fsh.calculate_pct(aligning, bin_specific_tree,
+                                                       site_type, seed, pct_params)
                                      for (aligning, site_type)
                                      in zip(aligning_species, site_types)])
 
         # calculate un-normalized branch length scores
-        uw_blss = [fsh.get_branch_length_score_generic(aligning)
+        uw_blss = [fsh.get_branch_length_score_generic(aligning, species_to_path)
                    for aligning in aligning_species]
 
         zipped = zip([gene]*num_sites,

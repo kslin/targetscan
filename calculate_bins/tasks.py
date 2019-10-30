@@ -4,11 +4,10 @@ import time
 import numpy as np
 import pandas as pd
 
-import config
 import bin_helpers
 
 
-def get_median_bls(gene, group):
+def get_median_bls(gene, group, species_to_path, ref_species):
     """
     Given a group of aligned sequences, find the median bls and bin.
 
@@ -26,14 +25,14 @@ def get_median_bls(gene, group):
     group = group.set_index('Species ID')
 
     # if the reference species is not in the aligned sequences, return 0
-    if config.REF_SPECIES not in group.index:
+    if ref_species not in group.index:
         return [gene, 0, 0]
 
     # otherwise, isolate the reference utr sequence and drop from the rest
-    ref_utr = group.loc[config.REF_SPECIES][['UTR sequence']].values[0]
+    ref_utr = group.loc[ref_species][['UTR sequence']].values[0]
     if len(ref_utr.replace('-', '')) == 0:  # return 0 if the reference UTR is all gaps
         return [gene, 0, 0]
-    group = group.drop(config.REF_SPECIES)
+    group = group.drop(ref_species)
 
     # if the reference utr was the only one in the alignment, return 0
     if len(group) == 0:
@@ -44,19 +43,19 @@ def get_median_bls(gene, group):
     num_gap = ref_utr.count('$')
 
     # for each position in the ref sequence, find aligning species
-    utr_list = zip(*[
+    utr_list = list(zip(*[
         bin_helpers.compare_seqs(x, ref_utr, group.index[i])
         for i, x in enumerate(group['UTR sequence'])
-    ])
+    ]))
 
     # group by aligning species so we only have to calculate each bls once
     subdf = pd.DataFrame({
         'nts': utr_list,
-        'count': [1] * len(ref_utr)
+        'count': 1
     })
 
-    subdf = subdf.groupby('nts').agg({'count': np.nansum})
-    subdf['bls'] = [bin_helpers.get_branch_length_score(x)
+    subdf = subdf.groupby('nts').agg({'count': np.sum})
+    subdf['bls'] = [bin_helpers.get_branch_length_score(x, species_to_path)
                     for x in subdf.index]
     subdf = subdf.sort_values(by=['bls'])
 

@@ -6,8 +6,6 @@ import time
 from Bio import Phylo
 import numpy as np
 
-import config
-
 
 def parse_tree(tree_file, ref_species):
     """
@@ -36,8 +34,7 @@ def parse_tree(tree_file, ref_species):
         if leaf.name == ref_species:
             ref_leaf = leaves.pop(i)
     if ref_leaf.name != ref_species:
-        print 'Error: reference species not in tree'
-        sys.exit()
+        raise ValueError('reference species not in tree')
 
     # dictionary that stores the paths to the reference species
     species_to_path = {ref_leaf.name: [(ref_leaf.name, 0)]}
@@ -94,7 +91,7 @@ def compare_seqs(seq, ref_utr, species_id):
     return [species_id if int(x == y) else -1 for (x, y) in zip(seq, ref_utr)]
 
 
-def get_branch_length_score(species_list):
+def get_branch_length_score(species_list, species_to_path):
     """
     Given a list of species, compute the branch length score
 
@@ -117,7 +114,7 @@ def get_branch_length_score(species_list):
     # get all the edges that connect these species to the reference
     all_paths = []
     for sp in species_list:
-        all_paths += config.SPECIES_TO_PATH[sp]
+        all_paths += species_to_path[sp]
 
     # get a unique list of these edges and compute bls
     all_paths = list(set(list(all_paths)))
@@ -189,8 +186,9 @@ def get_bin(bls):
     int: bin
     """
 
-    # get thresholds from config file
-    thresholds = config.BL_THRESHOLDS
+    # get thresholds from code on TargetScan website
+    thresholds = [0, 1.21207417, 2.17396073, 2.80215414, 3.26272822,
+                 3.65499277, 4.01461968, 4.40729032, 4.90457274, 5.78196252]
 
     # use binary search to find biggest threshold <= to the bls
     return bisect.bisect_right(thresholds, bls)

@@ -2,57 +2,115 @@ clean:
 	find . -name '*.pyc' -delete
 
 
-bins:
-	cd calculate_bins && python calculate_bins.py ../../nano/nano_utrs.txt ../../nano/kathy_bins_nano.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bins_tiny_outfile.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tinier_utrs.txt ../../outfiles/bins_tinier_outfile.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tiny_utrs.txt ../../outfiles/bins_small_outfile.txt
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bins_big_outfile.txt
-
-sites:
-	# cd find_sites && python find_sites.py ../../nano/nano_seeds.txt ../../nano/kathy_bins_nano.txt ../../nano/nano_utrs.txt ../../nano/kathy_sites_nano.txt
-	# cd find_sites && python find_sites.py ../../infiles/miR_Family_info_sample.txt ../../outfiles/bins_tiny_outfile.txt ../../infiles/UTR_Sequences_sample.txt ../../outfiles/sites_tiny_outfile.txt
-	# cd find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_tinier_outfile.txt ../../infiles/tinier_utrs.txt ../../outfiles/sites_tinier_outfile.txt
-	# cd find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_small_outfile.txt ../../infiles/tiny_utrs.txt ../../outfiles/sites_small_outfile.txt
-	cd find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_big_outfile.txt ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/sites_big_outfile.txt
-
-features:
-	# cd calculate_features/ && python calculate_features.py  ../../infiles/miR_for_context_scores.sample.txt ../../outfiles/sites_tiny_outfile.txt ../../infiles/ORF_Sequences_sample.txt ../../outfiles/tiny_output.txt
-	cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_tinier_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/tinier_output.txt
-	# cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_small_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/small_output.txt
-	# cd calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/big_output.txt
-
-all:
-# SAMPLES
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bins_tiny_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/miR_Family_info_sample.txt ../../outfiles/bins_tiny_outfile.txt ../../infiles/UTR_Sequences_sample.txt ../../outfiles/sites_tiny_outfile.txt \
-	# && cd ../calculate_features/ && python calculate_features.py  ../../infiles/miR_for_context_scores.sample.txt ../../outfiles/sites_tiny_outfile.txt ../../infiles/ORF_Sequences_sample.txt ../../outfiles/tiny_output.txt
-# TINIER
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tinier_utrs.txt ../../outfiles/bins_tinier_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_tinier_outfile.txt ../../infiles/tinier_utrs.txt ../../outfiles/sites_tinier_outfile.txt \
-	# && cd ../calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_tinier_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/tinier_output.txt
-# FINAL
-	cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bins_big_outfile.txt \
-	&& cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_big_outfile.txt ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/sites_big_outfile.txt \
-	# && cd ../calculate_features/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/big_output.txt
-
-all2:
-# SAMPLES
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bins_tiny_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/miR_Family_info_sample.txt ../../outfiles/bins_tiny_outfile.txt ../../infiles/UTR_Sequences_sample.txt ../../outfiles/sites_tiny_outfile.txt \
-	# && cd ../conservation && python calculate_bls.py ../../infiles/UTR_Sequences_sample.txt ../../outfiles/bls_tiny_outfile.txt \
-	# && cd ../calculate_features2 && python calculate_features.py  ../../infiles/miR_for_context_scores.sample.txt ../../outfiles/sites_tiny_outfile.txt ../../infiles/ORF_Sequences_sample.txt ../../outfiles/bls_tiny_outfile.txt ../../outfiles/tiny_output2.txt
-# TINIER
-	# cd calculate_bins && python calculate_bins.py ../../infiles/tinier_utrs.txt ../../outfiles/bins_tinier_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_tinier_outfile.txt ../../infiles/tinier_utrs.txt ../../outfiles/sites_tinier_outfile.txt \
-	# && cd ../conservation && python calculate_bls.py ../../infiles/tinier_utrs.txt ../../outfiles/bls_tinier_outfile.txt \
-	# && cd ../calculate_features2/ && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_tinier_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/bls_tinier_outfile.txt ../../outfiles/tinier_output.txt
-# FINAL
-	# cd calculate_bins && python calculate_bins.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bins_big_outfile.txt \
-	# && cd ../find_sites && python find_sites.py ../../infiles/kathy_seed_file.txt ../../outfiles/bins_big_outfile.txt ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/sites_big_outfile.txt \
-	# && cd ../conservation && python calculate_bls.py ../../infiles/UTR_Sequences_Ensembl_forTS_kathy_no_header.txt ../../outfiles/bls_big_outfile.txt \
-	# && cd ../calculate_features2 && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/bls_big_outfile.txt ../../outfiles/big_output.txt
-	cd calculate_features2 && python calculate_features.py ../../infiles/kathy_mirna_file.txt ../../outfiles/sites_big_outfile.txt ../../infiles/ORF_Sequences_human.txt ../../outfiles/bls_big_outfile.txt ../../outfiles/big_output.txt
+refseq_utr90:
+	mkdir -p /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90
+	python2 calculate_bins/calculate_bins.py \
+		--utr3_file /lab/solexa_bartel/klin/miRNA_models_data/transcript_info/refseq_utr90/UTR_Sequences.txt \
+		--tree_file PCT_parameters/Tree.generic.txt \
+		--out /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90/bins.txt \
+		--ref_species 9606 \
+		--futures
+	python2 find_sites/find_sites.py \
+		--seed_file /lab/solexa_bartel/klin/miRNA_models_data/miRNA_info/charlie_mirs/seed_file.txt \
+		--bin_file /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90/bins.txt \
+		--utr3_file /lab/solexa_bartel/klin/miRNA_models_data/transcript_info/refseq_utr90/UTR_Sequences.txt \
+		--tree_path PCT_parameters/ \
+		--out /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90/sites.txt \
+		--ribosome_shadow 14 \
+		--ref_species 9606 \
+		futures
+	python2 calculate_features/calculate_features.py \
+		--mirna_file /lab/solexa_bartel/klin/miRNA_models_data/miRNA_info/charlie_mirs/mirna_file.txt \
+		--site_file /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90/sites.txt \
+		--ta_sps_file calculate_features/TA_SPS_by_seed_region.txt \
+		--orf_file /lab/solexa_bartel/klin/miRNA_models_data/transcript_info/refseq_utr90/orf90.txt \
+		--rnaplfold_temp /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90/RNAPLFOLD_TEMP \
+		--out /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90/features.txt \
+		--ref_species 9606 \
+		--futures
+	rm -rf /lab/solexa_bartel/klin/miRNA_models_data/ts7_outputs/refseq_utr90/RNAPLFOLD_TEMP
 
 
+tests:
+	mkdir -p /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated
+	python2 calculate_bins/calculate_bins.py \
+		--utr3_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/UTR_Sequences.txt \
+		--tree_file PCT_parameters/Tree.generic.txt \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt \
+		--ref_species 9606
+	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/bins.txt
+	python2 find_sites/find_sites.py \
+		--seed_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/seed_file.txt \
+		--bin_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/bins.txt \
+		--utr3_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/UTR_Sequences.txt \
+		--tree_path PCT_parameters/ \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt \
+		--ribosome_shadow 14 \
+		--ref_species 9606
+	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/sites.txt
+	python2 calculate_features/calculate_features.py \
+		--mirna_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/mirna_file.txt \
+		--site_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt \
+		--ta_sps_file calculate_features/TA_SPS_by_seed_region.txt \
+		--orf_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/ORF_Sequences_Human.txt \
+		--rnaplfold_temp /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features.txt \
+		--ref_species 9606
+	rm -rf /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP
+	sed 's/[^\t]*\t//28' /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features.txt > /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features_noairs.txt
+	diff /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features_noairs.txt /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/original/features.txt
 
+tests_mouse:
+	mkdir -p /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse
+	python2 calculate_bins/calculate_bins.py \
+		--utr3_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/UTR_Sequences.txt \
+		--tree_file PCT_parameters/Tree.generic.txt \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse/bins.txt \
+		--ref_species 10090 \
+		--futures
+	python2 find_sites/find_sites.py \
+		--seed_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/seed_file.txt \
+		--bin_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse/bins.txt \
+		--utr3_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/UTR_Sequences.txt \
+		--tree_path PCT_parameters/ \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse/sites.txt \
+		--ribosome_shadow 14 \
+		--ref_species 10090 \
+		--futures
+	python2 calculate_features/calculate_features.py \
+		--mirna_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/mirna_file_mouse.txt \
+		--site_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse/sites.txt \
+		--ta_sps_file calculate_features/TA_SPS_by_seed_region.txt \
+		--orf_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/ORF_Sequences_Mouse.txt \
+		--rnaplfold_temp /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse/RNAPLFOLD_TEMP \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse/features.txt \
+		--ref_species 10090 \
+		--futures
+	rm -rf /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse/RNAPLFOLD_TEMP
+
+temp:
+	python2 calculate_predictions/calculate_predictions.py \
+		--feature_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features_with_airs.txt \
+		--coeff_file calculate_predictions/Agarwal_2015_parameters.txt \
+		--out_dir /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated_mouse
+
+
+
+features_with_airs:
+	python2 calculate_features/calculate_features.py \
+		--mirna_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/mirna_file.txt \
+		--site_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/sites.txt \
+		--ta_sps_file calculate_features/TA_SPS_by_seed_region.txt \
+		--orf_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/ORF_Sequences_Human.txt \
+		--rnaplfold_temp /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP \
+		--out /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features_with_airs.txt \
+		--ref_species 9606 \
+		--airs_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/inputs/AIRs_all_cell_lines.txt 
+	rm -rf /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/RNAPLFOLD_TEMP
+
+scores:
+	mkdir -p /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated2
+	python2 calculate_predictions/calculate_predictions.py \
+		--feature_file /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated/features_with_airs.txt \
+		--coeff_file calculate_predictions/Agarwal_2015_parameters.txt \
+		--out_dir /lab/bartel4_ata/kathyl/TargetScan/targetscan/testing/outputs/updated2
